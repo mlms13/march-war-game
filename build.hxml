@@ -1,0 +1,6 @@
+-lib edge
+-lib pixijs
+-lib thx.color
+-cp src
+-js bin/main.js
+-main Main
