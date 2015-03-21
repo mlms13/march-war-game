@@ -9,7 +9,7 @@ var thx = {};
 thx.color = {};
 thx.color._HSL = {};
 thx.color._HSL.HSL_Impl_ = function() { };
-thx.color._HSL.HSL_Impl_.__name__ = true;
+thx.color._HSL.HSL_Impl_.__name__ = ["thx","color","_HSL","HSL_Impl_"];
 thx.color._HSL.HSL_Impl_.create = function(hue,saturation,lightness) {
 	var channels = [thx.core.Floats.wrapCircular(hue,360),saturation < 0?0:saturation > 1?1:saturation,lightness < 0?0:lightness > 1?1:lightness];
 	return channels;
@@ -166,7 +166,7 @@ var EReg = function(r,opt) {
 	opt = opt.split("u").join("");
 	this.r = new RegExp(r,opt);
 };
-EReg.__name__ = true;
+EReg.__name__ = ["EReg"];
 EReg.prototype = {
 	match: function(s) {
 		if(this.r.global) this.r.lastIndex = 0;
@@ -228,7 +228,7 @@ EReg.prototype = {
 };
 thx.core = {};
 thx.core.Floats = function() { };
-thx.core.Floats.__name__ = true;
+thx.core.Floats.__name__ = ["thx","core","Floats"];
 thx.core.Floats.angleDifference = function(a,b,turn) {
 	if(turn == null) turn = 360;
 	var r = (b - a) % turn;
@@ -315,9 +315,9 @@ thx.core.Floats.wrapCircular = function(v,max) {
 	return v;
 };
 var Config = function() { };
-Config.__name__ = true;
+Config.__name__ = ["Config"];
 var HxOverrides = function() { };
-HxOverrides.__name__ = true;
+HxOverrides.__name__ = ["HxOverrides"];
 HxOverrides.cca = function(s,index) {
 	var x = s.charCodeAt(index);
 	if(x != x) return undefined;
@@ -352,7 +352,7 @@ HxOverrides.iter = function(a) {
 	}};
 };
 var Main = function() { };
-Main.__name__ = true;
+Main.__name__ = ["Main"];
 Main.main = function() {
 	var stage = new PIXI.Container();
 	var renderer = PIXI.autoDetectRenderer(Config.width,Config.height,{ antialias : true, resolution : 1, transparent : false});
@@ -361,10 +361,10 @@ Main.main = function() {
 	game.start();
 };
 var IMap = function() { };
-IMap.__name__ = true;
-Math.__name__ = true;
+IMap.__name__ = ["IMap"];
+Math.__name__ = ["Math"];
 var Std = function() { };
-Std.__name__ = true;
+Std.__name__ = ["Std"];
 Std.string = function(s) {
 	return js.Boot.__string_rec(s,"");
 };
@@ -383,7 +383,7 @@ Std.random = function(x) {
 var StringBuf = function() {
 	this.b = "";
 };
-StringBuf.__name__ = true;
+StringBuf.__name__ = ["StringBuf"];
 StringBuf.prototype = {
 	add: function(x) {
 		this.b += Std.string(x);
@@ -391,7 +391,7 @@ StringBuf.prototype = {
 	,__class__: StringBuf
 };
 var StringTools = function() { };
-StringTools.__name__ = true;
+StringTools.__name__ = ["StringTools"];
 StringTools.startsWith = function(s,start) {
 	return s.length >= start.length && HxOverrides.substr(s,0,start.length) == start;
 };
@@ -432,6 +432,387 @@ StringTools.hex = function(n,digits) {
 	if(digits != null) while(s.length < digits) s = "0" + s;
 	return s;
 };
+var Type = function() { };
+Type.__name__ = ["Type"];
+Type.getClass = function(o) {
+	if(o == null) return null;
+	if((o instanceof Array) && o.__enum__ == null) return Array; else return o.__class__;
+};
+Type.getClassName = function(c) {
+	var a = c.__name__;
+	return a.join(".");
+};
+var edge = {};
+edge.Engine = function() {
+	this.mapEntities = new haxe.ds.ObjectMap();
+	this.listPhases = [];
+};
+edge.Engine.__name__ = ["edge","Engine"];
+edge.Engine.prototype = {
+	create: function(components) {
+		var entity = new edge.Entity(this,components);
+		this.mapEntities.set(entity,true);
+		this.matchSystems(entity);
+		return entity;
+	}
+	,clear: function() {
+		var $it0 = this.mapEntities.keys();
+		while( $it0.hasNext() ) {
+			var entity = $it0.next();
+			this.remove(entity);
+		}
+	}
+	,remove: function(entity) {
+		this.eachSystem(function(system) {
+			system.__systemProcess.removeEntity(entity);
+		});
+		this.mapEntities.remove(entity);
+		entity.engine = null;
+	}
+	,entities: function() {
+		return this.mapEntities.keys();
+	}
+	,createPhase: function() {
+		var phase = new edge.Phase(this);
+		this.listPhases.push(phase);
+		return phase;
+	}
+	,phases: function() {
+		return HxOverrides.iter(this.listPhases);
+	}
+	,eachSystem: function(f) {
+		var _g = 0;
+		var _g1 = this.listPhases;
+		while(_g < _g1.length) {
+			var phase = _g1[_g];
+			++_g;
+			var $it0 = phase.systems();
+			while( $it0.hasNext() ) {
+				var system = $it0.next();
+				f(system);
+			}
+		}
+	}
+	,addSystem: function(phase,system) {
+		this.eachSystem(function(s) {
+			if(s == system) throw "System \"" + Std.string(system) + "\" already exists in Engine";
+		});
+		var $it0 = this.mapEntities.keys();
+		while( $it0.hasNext() ) {
+			var entity = $it0.next();
+			system.__systemProcess.addEntity(entity);
+		}
+	}
+	,removeSystem: function(system) {
+		var $it0 = this.mapEntities.keys();
+		while( $it0.hasNext() ) {
+			var entity = $it0.next();
+			system.__systemProcess.removeEntity(entity);
+		}
+	}
+	,updateSystem: function(system,t) {
+		system.__systemProcess.update(this,t);
+	}
+	,matchSystems: function(entity) {
+		var _g = this;
+		this.eachSystem(function(system) {
+			system.__systemProcess.addEntity(entity);
+		});
+	}
+	,match: function(entity,system) {
+		system.__systemProcess.addEntity(entity);
+	}
+	,__class__: edge.Engine
+};
+edge.Entity = function(engine,components) {
+	this.engine = engine;
+	this.map = new haxe.ds.StringMap();
+	if(null != components) this.addMany(components);
+};
+edge.Entity.__name__ = ["edge","Entity"];
+edge.Entity.prototype = {
+	add: function(component) {
+		if(null == this.engine) return;
+		this._add(component);
+		this.engine.matchSystems(this);
+	}
+	,addMany: function(components) {
+		var _g = this;
+		if(null == this.engine) return;
+		components.map(function(_) {
+			return _g._add(_);
+		});
+		this.engine.matchSystems(this);
+	}
+	,destroy: function() {
+		if(null == this.engine) return;
+		this.engine.remove(this);
+		this.map = new haxe.ds.StringMap();
+	}
+	,exists: function(component) {
+		return this.existsType(Type.getClassName(Type.getClass(component)));
+	}
+	,existsType: function(type) {
+		return this.map.exists(type);
+	}
+	,remove: function(component) {
+		this._remove(component);
+		this.engine.matchSystems(this);
+	}
+	,removeMany: function(components) {
+		var _g = this;
+		components.map(function(_) {
+			return _g._remove(_);
+		});
+		this.engine.matchSystems(this);
+	}
+	,removeType: function(type) {
+		this._removeTypeName(Type.getClassName(type));
+		this.engine.matchSystems(this);
+	}
+	,removeTypes: function(types) {
+		var _g = this;
+		types.map(function(_) {
+			return _g._removeTypeName(Type.getClassName(_));
+		});
+		this.engine.matchSystems(this);
+	}
+	,components: function() {
+		return this.map.iterator();
+	}
+	,_add: function(component) {
+		var type = Type.getClassName(Type.getClass(component));
+		if(this.map.exists(type)) this.remove(this.map.get(type));
+		this.map.set(type,component);
+	}
+	,_remove: function(component) {
+		var type = Type.getClassName(Type.getClass(component));
+		this._removeTypeName(type);
+	}
+	,_removeTypeName: function(type) {
+		this.map.remove(type);
+	}
+	,key: function(component) {
+		return Type.getClassName(Type.getClass(component));
+	}
+	,__class__: edge.Entity
+};
+edge.IComponent = function() { };
+edge.IComponent.__name__ = ["edge","IComponent"];
+edge.ISystem = function() { };
+edge.ISystem.__name__ = ["edge","ISystem"];
+edge.ISystem.prototype = {
+	__class__: edge.ISystem
+};
+edge.Phase = function(engine) {
+	this.engine = engine;
+	this.mapSystem = new haxe.ds.ObjectMap();
+	this.mapType = new haxe.ds.StringMap();
+};
+edge.Phase.__name__ = ["edge","Phase"];
+edge.Phase.prototype = {
+	add: function(system) {
+		this.remove(system);
+		var node = this.createNode(system);
+		if(null == this.first) {
+			this.first = node;
+			this.last = node;
+		} else {
+			node.prev = this.last;
+			this.last.next = node;
+			this.last = node;
+		}
+	}
+	,clear: function() {
+		var $it0 = this.systems();
+		while( $it0.hasNext() ) {
+			var system = $it0.next();
+			this.remove(system);
+		}
+	}
+	,insertBefore: function(ref,system) {
+		var noderef = this.mapSystem.h[ref.__id__];
+		if(null == noderef) throw "Phase.insertBefore: unable to find " + Std.string(ref) + " system";
+		var node = this.createNode(system);
+		if(noderef == this.first) {
+			node.next = noderef;
+			noderef.prev = node;
+			this.first = node;
+		} else {
+			var prev = noderef.prev;
+			prev.next = node;
+			node.prev = prev;
+			node.next = noderef;
+			noderef.prev = node;
+		}
+	}
+	,insertAfter: function(ref,system) {
+		var noderef = this.mapSystem.h[ref.__id__];
+		if(null == noderef) throw "Phase.insertAfter: unable to find " + Std.string(ref) + " system";
+		var node = this.createNode(system);
+		if(noderef == this.last) {
+			node.prev = noderef;
+			noderef.next = node;
+			this.last = node;
+		} else {
+			var next = noderef.next;
+			next.prev = node;
+			node.next = next;
+			node.prev = noderef;
+			noderef.next = node;
+		}
+	}
+	,remove: function(system) {
+		var node = this.mapSystem.h[system.__id__];
+		var key = this.key(system);
+		this.mapType.remove(key);
+		if(null == node) return;
+		if(null != this.engine) this.engine.removeSystem(system);
+		this.mapSystem.remove(system);
+		if(node == this.first && node == this.last) this.first = this.last = null; else if(node == this.first) {
+			this.first = node.next;
+			node.next.prev = null;
+		} else if(node == this.last) {
+			this.first = node.prev;
+			node.prev.next = null;
+		} else {
+			node.prev.next = node.next;
+			node.next.prev = node.prev;
+		}
+	}
+	,removeType: function(cls) {
+		var system;
+		var key = Type.getClassName(cls);
+		system = this.mapType.get(key);
+		if(null == system) throw "type system " + Type.getClassName(cls) + " is not included in this Phase";
+		return this.remove(system);
+	}
+	,systems: function() {
+		return new edge.core.NodeSystemIterator(this.first);
+	}
+	,update: function(t) {
+		if(null == this.engine) return;
+		var $it0 = this.systems();
+		while( $it0.hasNext() ) {
+			var system = $it0.next();
+			this.engine.updateSystem(system,t);
+		}
+	}
+	,createNode: function(system) {
+		var node = new edge.core.NodeSystem(system);
+		this.mapSystem.set(system,node);
+		var key = this.key(system);
+		this.mapType.set(key,system);
+		if(null != this.engine) this.engine.addSystem(this,system);
+		return node;
+	}
+	,key: function(system) {
+		return Type.getClassName(Type.getClass(system));
+	}
+	,__class__: edge.Phase
+};
+edge.View = function() {
+	this.map = new haxe.ds.ObjectMap();
+	this.count = 0;
+};
+edge.View.__name__ = ["edge","View"];
+edge.View.prototype = {
+	iterator: function() {
+		var _g = this;
+		var keys = this.map.keys();
+		var holder = { entity : null, data : null};
+		return { hasNext : function() {
+			return keys.hasNext();
+		}, next : function() {
+			var key = keys.next();
+			holder.entity = key;
+			holder.data = _g.map.h[key.__id__];
+			return holder;
+		}};
+	}
+	,add: function(entity,data) {
+		if(this.map.h.__keys__[entity.__id__] != null) return;
+		this.map.set(entity,data);
+		this.count++;
+	}
+	,remove: function(entity) {
+		if(!(this.map.h.__keys__[entity.__id__] != null)) return;
+		this.map.remove(entity);
+		this.count--;
+	}
+	,__class__: edge.View
+};
+edge.World = function(delta,schedule) {
+	if(delta == null) delta = 16;
+	this.engine = new edge.Engine();
+	this.frame = this.engine.createPhase();
+	this.physics = this.engine.createPhase();
+	this.render = this.engine.createPhase();
+	this.remainder = 0;
+	this.running = false;
+	this.delta = delta;
+	if(null != schedule) this.schedule = schedule; else this.schedule = thx.core.Timer.frame;
+};
+edge.World.__name__ = ["edge","World"];
+edge.World.prototype = {
+	start: function() {
+		if(this.running) return;
+		this.running = true;
+		this.cancel = this.schedule($bind(this,this.run));
+	}
+	,run: function(t) {
+		this.frame.update(t);
+		var dt = t + this.remainder;
+		while(dt > this.delta) {
+			dt -= this.delta;
+			this.physics.update(this.delta);
+		}
+		this.remainder = dt;
+		this.render.update(t);
+	}
+	,stop: function() {
+		if(!this.running) return;
+		this.running = false;
+		this.cancel();
+	}
+	,clear: function() {
+		var $it0 = this.engine.phases();
+		while( $it0.hasNext() ) {
+			var phase = $it0.next();
+			phase.clear();
+		}
+		this.engine.clear();
+	}
+	,__class__: edge.World
+};
+edge.core = {};
+edge.core.ISystemProcess = function() { };
+edge.core.ISystemProcess.__name__ = ["edge","core","ISystemProcess"];
+edge.core.ISystemProcess.prototype = {
+	__class__: edge.core.ISystemProcess
+};
+edge.core.NodeSystem = function(system) {
+	this.system = system;
+};
+edge.core.NodeSystem.__name__ = ["edge","core","NodeSystem"];
+edge.core.NodeSystem.prototype = {
+	__class__: edge.core.NodeSystem
+};
+edge.core.NodeSystemIterator = function(node) {
+	this.node = node;
+};
+edge.core.NodeSystemIterator.__name__ = ["edge","core","NodeSystemIterator"];
+edge.core.NodeSystemIterator.prototype = {
+	hasNext: function() {
+		return null != this.node;
+	}
+	,next: function() {
+		var system = this.node.system;
+		this.node = this.node.next;
+		return system;
+	}
+	,__class__: edge.core.NodeSystemIterator
+};
 var haxe = {};
 haxe.StackItem = { __ename__ : true, __constructs__ : ["CFunction","Module","FilePos","Method","LocalFunction"] };
 haxe.StackItem.CFunction = ["CFunction",0];
@@ -441,7 +822,7 @@ haxe.StackItem.FilePos = function(s,file,line) { var $x = ["FilePos",2,s,file,li
 haxe.StackItem.Method = function(classname,method) { var $x = ["Method",3,classname,method]; $x.__enum__ = haxe.StackItem; return $x; };
 haxe.StackItem.LocalFunction = function(v) { var $x = ["LocalFunction",4,v]; $x.__enum__ = haxe.StackItem; return $x; };
 haxe.CallStack = function() { };
-haxe.CallStack.__name__ = true;
+haxe.CallStack.__name__ = ["haxe","CallStack"];
 haxe.CallStack.callStack = function() {
 	var oldValue = Error.prepareStackTrace;
 	Error.prepareStackTrace = function(error,callsites) {
@@ -534,10 +915,38 @@ haxe.CallStack.makeStack = function(s) {
 	} else return s;
 };
 haxe.ds = {};
+haxe.ds.ObjectMap = function() {
+	this.h = { };
+	this.h.__keys__ = { };
+};
+haxe.ds.ObjectMap.__name__ = ["haxe","ds","ObjectMap"];
+haxe.ds.ObjectMap.__interfaces__ = [IMap];
+haxe.ds.ObjectMap.prototype = {
+	set: function(key,value) {
+		var id = key.__id__ || (key.__id__ = ++haxe.ds.ObjectMap.count);
+		this.h[id] = value;
+		this.h.__keys__[id] = key;
+	}
+	,remove: function(key) {
+		var id = key.__id__;
+		if(this.h.__keys__[id] == null) return false;
+		delete(this.h[id]);
+		delete(this.h.__keys__[id]);
+		return true;
+	}
+	,keys: function() {
+		var a = [];
+		for( var key in this.h.__keys__ ) {
+		if(this.h.hasOwnProperty(key)) a.push(this.h.__keys__[key]);
+		}
+		return HxOverrides.iter(a);
+	}
+	,__class__: haxe.ds.ObjectMap
+};
 haxe.ds.StringMap = function() {
 	this.h = { };
 };
-haxe.ds.StringMap.__name__ = true;
+haxe.ds.StringMap.__name__ = ["haxe","ds","StringMap"];
 haxe.ds.StringMap.__interfaces__ = [IMap];
 haxe.ds.StringMap.prototype = {
 	set: function(key,value) {
@@ -549,11 +958,32 @@ haxe.ds.StringMap.prototype = {
 	,exists: function(key) {
 		return this.h.hasOwnProperty("$" + key);
 	}
+	,remove: function(key) {
+		key = "$" + key;
+		if(!this.h.hasOwnProperty(key)) return false;
+		delete(this.h[key]);
+		return true;
+	}
+	,keys: function() {
+		var a = [];
+		for( var key in this.h ) {
+		if(this.h.hasOwnProperty(key)) a.push(key.substr(1));
+		}
+		return HxOverrides.iter(a);
+	}
+	,iterator: function() {
+		return { ref : this.h, it : this.keys(), hasNext : function() {
+			return this.it.hasNext();
+		}, next : function() {
+			var i = this.it.next();
+			return this.ref["$" + i];
+		}};
+	}
 	,__class__: haxe.ds.StringMap
 };
 var js = {};
 js.Boot = function() { };
-js.Boot.__name__ = true;
+js.Boot.__name__ = ["js","Boot"];
 js.Boot.getClass = function(o) {
 	if((o instanceof Array) && o.__enum__ == null) return Array; else return o.__class__;
 };
@@ -668,7 +1098,7 @@ js.Boot.__instanceof = function(o,cl) {
 };
 thx.color._CIELCh = {};
 thx.color._CIELCh.CIELCh_Impl_ = function() { };
-thx.color._CIELCh.CIELCh_Impl_.__name__ = true;
+thx.color._CIELCh.CIELCh_Impl_.__name__ = ["thx","color","_CIELCh","CIELCh_Impl_"];
 thx.color._CIELCh.CIELCh_Impl_.create = function(lightness,chroma,hue) {
 	var channels = [lightness,chroma,thx.core.Floats.wrapCircular(hue,360)];
 	return channels;
@@ -799,7 +1229,7 @@ thx.color._CIELCh.CIELCh_Impl_.get_hue = function(this1) {
 };
 thx.color._CIELab = {};
 thx.color._CIELab.CIELab_Impl_ = function() { };
-thx.color._CIELab.CIELab_Impl_.__name__ = true;
+thx.color._CIELab.CIELab_Impl_.__name__ = ["thx","color","_CIELab","CIELab_Impl_"];
 thx.color._CIELab.CIELab_Impl_.create = function(l,a,b) {
 	return [l,a,b];
 };
@@ -930,7 +1360,7 @@ thx.color._CIELab.CIELab_Impl_.get_b = function(this1) {
 };
 thx.color._CMY = {};
 thx.color._CMY.CMY_Impl_ = function() { };
-thx.color._CMY.CMY_Impl_.__name__ = true;
+thx.color._CMY.CMY_Impl_.__name__ = ["thx","color","_CMY","CMY_Impl_"];
 thx.color._CMY.CMY_Impl_.create = function(cyan,magenta,yellow) {
 	return [cyan < 0?0:cyan > 1?1:cyan,magenta < 0?0:magenta > 1?1:magenta,yellow < 0?0:yellow > 1?1:yellow];
 };
@@ -1024,7 +1454,7 @@ thx.color._CMY.CMY_Impl_.get_yellow = function(this1) {
 };
 thx.color._CMYK = {};
 thx.color._CMYK.CMYK_Impl_ = function() { };
-thx.color._CMYK.CMYK_Impl_.__name__ = true;
+thx.color._CMYK.CMYK_Impl_.__name__ = ["thx","color","_CMYK","CMYK_Impl_"];
 thx.color._CMYK.CMYK_Impl_.create = function(cyan,magenta,yellow,black) {
 	return [cyan < 0?0:cyan > 1?1:cyan,magenta < 0?0:magenta > 1?1:magenta,yellow < 0?0:yellow > 1?1:yellow,black < 0?0:black > 1?1:black];
 };
@@ -1131,7 +1561,7 @@ thx.color._CMYK.CMYK_Impl_.toYxy = function(this1) {
 };
 thx.color._Grey = {};
 thx.color._Grey.Grey_Impl_ = function() { };
-thx.color._Grey.Grey_Impl_.__name__ = true;
+thx.color._Grey.Grey_Impl_.__name__ = ["thx","color","_Grey","Grey_Impl_"];
 thx.color._Grey.Grey_Impl_.create = function(v) {
 	if(v < 0) return 0; else if(v > 1) return 1; else return v;
 };
@@ -1216,7 +1646,7 @@ thx.color._Grey.Grey_Impl_.toYxy = function(this1) {
 };
 thx.color._HSLA = {};
 thx.color._HSLA.HSLA_Impl_ = function() { };
-thx.color._HSLA.HSLA_Impl_.__name__ = true;
+thx.color._HSLA.HSLA_Impl_.__name__ = ["thx","color","_HSLA","HSLA_Impl_"];
 thx.color._HSLA.HSLA_Impl_.create = function(hue,saturation,lightness,alpha) {
 	var channels = [thx.core.Floats.wrapCircular(hue,360),saturation < 0?0:saturation > 1?1:saturation,lightness < 0?0:lightness > 1?1:lightness,alpha < 0?0:alpha > 1?1:alpha];
 	return channels;
@@ -1349,7 +1779,7 @@ thx.color._HSLA.HSLA_Impl_._c = function(d,s,l) {
 };
 thx.color._HSV = {};
 thx.color._HSV.HSV_Impl_ = function() { };
-thx.color._HSV.HSV_Impl_.__name__ = true;
+thx.color._HSV.HSV_Impl_.__name__ = ["thx","color","_HSV","HSV_Impl_"];
 thx.color._HSV.HSV_Impl_.create = function(hue,saturation,lightness) {
 	var channels = [thx.core.Floats.wrapCircular(hue,360),saturation < 0?0:saturation > 1?1:saturation,lightness < 0?0:lightness > 1?1:lightness];
 	return channels;
@@ -1531,7 +1961,7 @@ thx.color._HSV.HSV_Impl_.get_value = function(this1) {
 };
 thx.color._HSVA = {};
 thx.color._HSVA.HSVA_Impl_ = function() { };
-thx.color._HSVA.HSVA_Impl_.__name__ = true;
+thx.color._HSVA.HSVA_Impl_.__name__ = ["thx","color","_HSVA","HSVA_Impl_"];
 thx.color._HSVA.HSVA_Impl_.create = function(hue,saturation,value,alpha) {
 	var channels = [thx.core.Floats.wrapCircular(hue,360),saturation < 0?0:saturation > 1?1:saturation,value < 0?0:value > 1?1:value,alpha < 0?0:alpha > 1?1:alpha];
 	return channels;
@@ -1691,7 +2121,7 @@ thx.color._HSVA.HSVA_Impl_.get_alpha = function(this1) {
 };
 thx.color._RGB = {};
 thx.color._RGB.RGB_Impl_ = function() { };
-thx.color._RGB.RGB_Impl_.__name__ = true;
+thx.color._RGB.RGB_Impl_.__name__ = ["thx","color","_RGB","RGB_Impl_"];
 thx.color._RGB.RGB_Impl_.create = function(red,green,blue) {
 	return (red & 255) << 16 | (green & 255) << 8 | blue & 255;
 };
@@ -1802,7 +2232,7 @@ thx.color._RGB.RGB_Impl_.get_blue = function(this1) {
 };
 thx.color._RGBA = {};
 thx.color._RGBA.RGBA_Impl_ = function() { };
-thx.color._RGBA.RGBA_Impl_.__name__ = true;
+thx.color._RGBA.RGBA_Impl_.__name__ = ["thx","color","_RGBA","RGBA_Impl_"];
 thx.color._RGBA.RGBA_Impl_.create = function(red,green,blue,alpha) {
 	return (red & 255) << 24 | (green & 255) << 16 | (blue & 255) << 8 | alpha & 255;
 };
@@ -1909,7 +2339,7 @@ thx.color._RGBA.RGBA_Impl_.get_blue = function(this1) {
 };
 thx.color._RGBX = {};
 thx.color._RGBX.RGBX_Impl_ = function() { };
-thx.color._RGBX.RGBX_Impl_.__name__ = true;
+thx.color._RGBX.RGBX_Impl_.__name__ = ["thx","color","_RGBX","RGBX_Impl_"];
 thx.color._RGBX.RGBX_Impl_.create = function(red,green,blue) {
 	return [red < 0?0:red > 1?1:red,green < 0?0:green > 1?1:green,blue < 0?0:blue > 1?1:blue];
 };
@@ -2082,7 +2512,7 @@ thx.color._RGBX.RGBX_Impl_.get_bluef = function(this1) {
 };
 thx.color._RGBXA = {};
 thx.color._RGBXA.RGBXA_Impl_ = function() { };
-thx.color._RGBXA.RGBXA_Impl_.__name__ = true;
+thx.color._RGBXA.RGBXA_Impl_.__name__ = ["thx","color","_RGBXA","RGBXA_Impl_"];
 thx.color._RGBXA.RGBXA_Impl_.create = function(red,green,blue,alpha) {
 	return [red < 0?0:red > 1?1:red,green < 0?0:green > 1?1:green,blue < 0?0:blue > 1?1:blue,alpha < 0?0:alpha > 1?1:alpha];
 };
@@ -2204,7 +2634,7 @@ thx.color._RGBXA.RGBXA_Impl_.get_alphaf = function(this1) {
 };
 thx.color._XYZ = {};
 thx.color._XYZ.XYZ_Impl_ = function() { };
-thx.color._XYZ.XYZ_Impl_.__name__ = true;
+thx.color._XYZ.XYZ_Impl_.__name__ = ["thx","color","_XYZ","XYZ_Impl_"];
 thx.color._XYZ.XYZ_Impl_.create = function(x,y,z) {
 	return [x,y,z];
 };
@@ -2314,7 +2744,7 @@ thx.color._XYZ.XYZ_Impl_.get_z = function(this1) {
 };
 thx.color._Yxy = {};
 thx.color._Yxy.Yxy_Impl_ = function() { };
-thx.color._Yxy.Yxy_Impl_.__name__ = true;
+thx.color._Yxy.Yxy_Impl_.__name__ = ["thx","color","_Yxy","Yxy_Impl_"];
 thx.color._Yxy.Yxy_Impl_.create = function(y1,x,y2) {
 	return [y1,x,y2];
 };
@@ -2410,7 +2840,7 @@ thx.color.parse.ColorParser = function() {
 	this.pattern_color = new EReg("^\\s*([^(]+)\\s*\\(([^)]*)\\)\\s*$","i");
 	this.pattern_channel = new EReg("^\\s*(\\d*.\\d+|\\d+)(%|deg|rad)?\\s*$","i");
 };
-thx.color.parse.ColorParser.__name__ = true;
+thx.color.parse.ColorParser.__name__ = ["thx","color","parse","ColorParser"];
 thx.color.parse.ColorParser.parseColor = function(s) {
 	return thx.color.parse.ColorParser.parser.processColor(s);
 };
@@ -2552,7 +2982,7 @@ thx.color.parse.ColorInfo = function(name,channels) {
 	this.name = name;
 	this.channels = channels;
 };
-thx.color.parse.ColorInfo.__name__ = true;
+thx.color.parse.ColorInfo.__name__ = ["thx","color","parse","ColorInfo"];
 thx.color.parse.ColorInfo.prototype = {
 	toString: function() {
 		return "" + this.name + ", channels: " + Std.string(this.channels);
@@ -2567,7 +2997,7 @@ thx.color.parse.ChannelInfo.CIInt8 = function(value) { var $x = ["CIInt8",3,valu
 thx.color.parse.ChannelInfo.CIInt = function(value) { var $x = ["CIInt",4,value]; $x.__enum__ = thx.color.parse.ChannelInfo; return $x; };
 thx.color.parse.ChannelInfo.CIBool = function(value) { var $x = ["CIBool",5,value]; $x.__enum__ = thx.color.parse.ChannelInfo; return $x; };
 thx.core.Arrays = function() { };
-thx.core.Arrays.__name__ = true;
+thx.core.Arrays.__name__ = ["thx","core","Arrays"];
 thx.core.Arrays.after = function(array,element) {
 	return array.slice(HxOverrides.indexOf(array,element,0) + 1);
 };
@@ -2927,7 +3357,7 @@ thx.core.Arrays.unzip5 = function(array) {
 	return { _0 : a1, _1 : a2, _2 : a3, _3 : a4, _4 : a5};
 };
 thx.core.ArrayFloats = function() { };
-thx.core.ArrayFloats.__name__ = true;
+thx.core.ArrayFloats.__name__ = ["thx","core","ArrayFloats"];
 thx.core.ArrayFloats.average = function(arr) {
 	return thx.core.ArrayFloats.sum(arr) / arr.length;
 };
@@ -2958,7 +3388,7 @@ thx.core.ArrayFloats.sum = function(arr) {
 	},0.0);
 };
 thx.core.ArrayInts = function() { };
-thx.core.ArrayInts.__name__ = true;
+thx.core.ArrayInts.__name__ = ["thx","core","ArrayInts"];
 thx.core.ArrayInts.average = function(arr) {
 	return thx.core.ArrayInts.sum(arr) / arr.length;
 };
@@ -2984,7 +3414,7 @@ thx.core.ArrayInts.sum = function(arr) {
 	},0);
 };
 thx.core.ArrayStrings = function() { };
-thx.core.ArrayStrings.__name__ = true;
+thx.core.ArrayStrings.__name__ = ["thx","core","ArrayStrings"];
 thx.core.ArrayStrings.compact = function(arr) {
 	return arr.filter(function(v) {
 		return !thx.core.Strings.isEmpty(v);
@@ -3018,7 +3448,7 @@ thx.core.Error = function(message,stack,pos) {
 	this.stackItems = stack;
 	this.pos = pos;
 };
-thx.core.Error.__name__ = true;
+thx.core.Error.__name__ = ["thx","core","Error"];
 thx.core.Error.fromDynamic = function(err,pos) {
 	if(js.Boot.__instanceof(err,thx.core.Error)) return err;
 	return new thx.core.Error("" + Std.string(err),null,pos);
@@ -3031,7 +3461,7 @@ thx.core.Error.prototype = $extend(Error.prototype,{
 	,__class__: thx.core.Error
 });
 thx.core.Functions0 = function() { };
-thx.core.Functions0.__name__ = true;
+thx.core.Functions0.__name__ = ["thx","core","Functions0"];
 thx.core.Functions0.after = function(callback,n) {
 	return function() {
 		if(--n == 0) callback();
@@ -3070,7 +3500,7 @@ thx.core.Functions0.timesi = function(n,callback) {
 	};
 };
 thx.core.Functions1 = function() { };
-thx.core.Functions1.__name__ = true;
+thx.core.Functions1.__name__ = ["thx","core","Functions1"];
 thx.core.Functions1.compose = function(fa,fb) {
 	return function(v) {
 		return fa(fb(v));
@@ -3122,7 +3552,7 @@ thx.core.Functions1.swapArguments = function(callback) {
 	};
 };
 thx.core.Functions2 = function() { };
-thx.core.Functions2.__name__ = true;
+thx.core.Functions2.__name__ = ["thx","core","Functions2"];
 thx.core.Functions2.memoize = function(callback,resolver) {
 	if(null == resolver) resolver = function(v1,v2) {
 		return "" + Std.string(v1) + ":" + Std.string(v2);
@@ -3142,7 +3572,7 @@ thx.core.Functions2.negate = function(callback) {
 	};
 };
 thx.core.Functions3 = function() { };
-thx.core.Functions3.__name__ = true;
+thx.core.Functions3.__name__ = ["thx","core","Functions3"];
 thx.core.Functions3.memoize = function(callback,resolver) {
 	if(null == resolver) resolver = function(v1,v2,v3) {
 		return "" + Std.string(v1) + ":" + Std.string(v2) + ":" + Std.string(v3);
@@ -3162,7 +3592,7 @@ thx.core.Functions3.negate = function(callback) {
 	};
 };
 thx.core.Functions = function() { };
-thx.core.Functions.__name__ = true;
+thx.core.Functions.__name__ = ["thx","core","Functions"];
 thx.core.Functions.constant = function(v) {
 	return function() {
 		return v;
@@ -3177,7 +3607,7 @@ thx.core.Functions.identity = function(value) {
 thx.core.Functions.noop = function() {
 };
 thx.core.Ints = function() { };
-thx.core.Ints.__name__ = true;
+thx.core.Ints.__name__ = ["thx","core","Ints"];
 thx.core.Ints.abs = function(v) {
 	if(v < 0) return -v; else return v;
 };
@@ -3244,7 +3674,7 @@ thx.core.Nil = { __ename__ : true, __constructs__ : ["nil"] };
 thx.core.Nil.nil = ["nil",0];
 thx.core.Nil.nil.__enum__ = thx.core.Nil;
 thx.core.Strings = function() { };
-thx.core.Strings.__name__ = true;
+thx.core.Strings.__name__ = ["thx","core","Strings"];
 thx.core.Strings.after = function(value,searchFor) {
 	var pos = value.indexOf(searchFor);
 	if(pos < 0) return ""; else return value.substring(pos + searchFor.length);
@@ -3436,9 +3866,93 @@ thx.core.Strings.wrapLine = function(s,columns,indent,newline) {
 	}
 	return indent + parts.join(newline + indent);
 };
+thx.core.Timer = function() { };
+thx.core.Timer.__name__ = ["thx","core","Timer"];
+thx.core.Timer.debounce = function(callback,delayms,leading) {
+	if(leading == null) leading = false;
+	var cancel = thx.core.Functions.noop;
+	var poll = function() {
+		cancel();
+		cancel = thx.core.Timer.delay(callback,delayms);
+	};
+	return function() {
+		if(leading) {
+			leading = false;
+			callback();
+		}
+		poll();
+	};
+};
+thx.core.Timer.throttle = function(callback,delayms,leading) {
+	if(leading == null) leading = false;
+	var waiting = false;
+	var poll = function() {
+		waiting = true;
+		thx.core.Timer.delay(callback,delayms);
+	};
+	return function() {
+		if(leading) {
+			leading = false;
+			callback();
+			return;
+		}
+		if(waiting) return;
+		poll();
+	};
+};
+thx.core.Timer.repeat = function(callback,delayms) {
+	return (function(f,id) {
+		return function() {
+			return f(id);
+		};
+	})(thx.core.Timer.clear,setInterval(callback,delayms));
+};
+thx.core.Timer.delay = function(callback,delayms) {
+	return (function(f,id) {
+		return function() {
+			return f(id);
+		};
+	})(thx.core.Timer.clear,setTimeout(callback,delayms));
+};
+thx.core.Timer.frame = function(callback) {
+	var cancelled = false;
+	var f = thx.core.Functions.noop;
+	var current = performance.now();
+	var next;
+	f = function() {
+		if(cancelled) return;
+		next = performance.now();
+		callback(next - current);
+		current = next;
+		requestAnimationFrame(f);
+	};
+	requestAnimationFrame(f);
+	return function() {
+		cancelled = true;
+	};
+};
+thx.core.Timer.nextFrame = function(callback) {
+	var id = requestAnimationFrame(callback);
+	return function() {
+		cancelAnimationFrame(id);
+	};
+};
+thx.core.Timer.immediate = function(callback) {
+	return (function(f,id) {
+		return function() {
+			return f(id);
+		};
+	})(thx.core.Timer.clear,setImmediate(callback));
+};
+thx.core.Timer.clear = function(id) {
+	return clearTimeout(id);
+};
+thx.core.Timer.time = function() {
+	return performance.now();
+};
 thx.core._Tuple = {};
 thx.core._Tuple.Tuple0_Impl_ = function() { };
-thx.core._Tuple.Tuple0_Impl_.__name__ = true;
+thx.core._Tuple.Tuple0_Impl_.__name__ = ["thx","core","_Tuple","Tuple0_Impl_"];
 thx.core._Tuple.Tuple0_Impl_._new = function() {
 	return thx.core.Nil.nil;
 };
@@ -3455,7 +3969,7 @@ thx.core._Tuple.Tuple0_Impl_.nilToTuple = function(v) {
 	return thx.core.Nil.nil;
 };
 thx.core._Tuple.Tuple1_Impl_ = function() { };
-thx.core._Tuple.Tuple1_Impl_.__name__ = true;
+thx.core._Tuple.Tuple1_Impl_.__name__ = ["thx","core","_Tuple","Tuple1_Impl_"];
 thx.core._Tuple.Tuple1_Impl_._new = function(_0) {
 	return _0;
 };
@@ -3469,7 +3983,7 @@ thx.core._Tuple.Tuple1_Impl_.toString = function(this1) {
 	return "Tuple1(" + Std.string(this1) + ")";
 };
 thx.core._Tuple.Tuple2_Impl_ = function() { };
-thx.core._Tuple.Tuple2_Impl_.__name__ = true;
+thx.core._Tuple.Tuple2_Impl_.__name__ = ["thx","core","_Tuple","Tuple2_Impl_"];
 thx.core._Tuple.Tuple2_Impl_._new = function(_0,_1) {
 	return { _0 : _0, _1 : _1};
 };
@@ -3495,7 +4009,7 @@ thx.core._Tuple.Tuple2_Impl_.toString = function(this1) {
 	return "Tuple2(" + Std.string(this1._0) + "," + Std.string(this1._1) + ")";
 };
 thx.core._Tuple.Tuple3_Impl_ = function() { };
-thx.core._Tuple.Tuple3_Impl_.__name__ = true;
+thx.core._Tuple.Tuple3_Impl_.__name__ = ["thx","core","_Tuple","Tuple3_Impl_"];
 thx.core._Tuple.Tuple3_Impl_._new = function(_0,_1,_2) {
 	return { _0 : _0, _1 : _1, _2 : _2};
 };
@@ -3515,7 +4029,7 @@ thx.core._Tuple.Tuple3_Impl_.toString = function(this1) {
 	return "Tuple3(" + Std.string(this1._0) + "," + Std.string(this1._1) + "," + Std.string(this1._2) + ")";
 };
 thx.core._Tuple.Tuple4_Impl_ = function() { };
-thx.core._Tuple.Tuple4_Impl_.__name__ = true;
+thx.core._Tuple.Tuple4_Impl_.__name__ = ["thx","core","_Tuple","Tuple4_Impl_"];
 thx.core._Tuple.Tuple4_Impl_._new = function(_0,_1,_2,_3) {
 	return { _0 : _0, _1 : _1, _2 : _2, _3 : _3};
 };
@@ -3535,7 +4049,7 @@ thx.core._Tuple.Tuple4_Impl_.toString = function(this1) {
 	return "Tuple4(" + Std.string(this1._0) + "," + Std.string(this1._1) + "," + Std.string(this1._2) + "," + Std.string(this1._3) + ")";
 };
 thx.core._Tuple.Tuple5_Impl_ = function() { };
-thx.core._Tuple.Tuple5_Impl_.__name__ = true;
+thx.core._Tuple.Tuple5_Impl_.__name__ = ["thx","core","_Tuple","Tuple5_Impl_"];
 thx.core._Tuple.Tuple5_Impl_._new = function(_0,_1,_2,_3,_4) {
 	return { _0 : _0, _1 : _1, _2 : _2, _3 : _3, _4 : _4};
 };
@@ -3555,7 +4069,7 @@ thx.core._Tuple.Tuple5_Impl_.toString = function(this1) {
 	return "Tuple5(" + Std.string(this1._0) + "," + Std.string(this1._1) + "," + Std.string(this1._2) + "," + Std.string(this1._3) + "," + Std.string(this1._4) + ")";
 };
 thx.core._Tuple.Tuple6_Impl_ = function() { };
-thx.core._Tuple.Tuple6_Impl_.__name__ = true;
+thx.core._Tuple.Tuple6_Impl_.__name__ = ["thx","core","_Tuple","Tuple6_Impl_"];
 thx.core._Tuple.Tuple6_Impl_._new = function(_0,_1,_2,_3,_4,_5) {
 	return { _0 : _0, _1 : _1, _2 : _2, _3 : _3, _4 : _4, _5 : _5};
 };
@@ -3575,7 +4089,7 @@ thx.core.error = {};
 thx.core.error.NullArgument = function(message,posInfo) {
 	thx.core.Error.call(this,message,null,posInfo);
 };
-thx.core.error.NullArgument.__name__ = true;
+thx.core.error.NullArgument.__name__ = ["thx","core","error","NullArgument"];
 thx.core.error.NullArgument.__super__ = thx.core.Error;
 thx.core.error.NullArgument.prototype = $extend(thx.core.Error.prototype,{
 	__class__: thx.core.error.NullArgument
@@ -3584,12 +4098,103 @@ var wargame = {};
 wargame.Game = function(stage,renderer) {
 	this.stage = stage;
 	this.renderer = renderer;
+	this.world = new edge.World();
+	var _g1 = 0;
+	var _g = Config.yTiles;
+	while(_g1 < _g) {
+		var i = _g1++;
+		var _g3 = 0;
+		var _g2 = Config.xTiles;
+		while(_g3 < _g2) {
+			var j = _g3++;
+			this.world.engine.create([new wargame.components.Rendering("assets/grass.png",i * Config.tileHeight,j * Config.tileWidth)]);
+		}
+	}
+	this.world.render.add(new wargame.render.PixiRenderer(stage,renderer));
 };
-wargame.Game.__name__ = true;
+wargame.Game.__name__ = ["wargame","Game"];
 wargame.Game.prototype = {
 	start: function() {
+		this.world.start();
 	}
 	,__class__: wargame.Game
+};
+wargame.components = {};
+wargame.components.Rendering = function(image,x,y) {
+	if(y == null) y = 0;
+	if(x == null) x = 0;
+	this.sprite = new PIXI.Sprite(PIXI.Texture.fromImage(image));
+	this.x = x;
+	this.y = y;
+};
+wargame.components.Rendering.__name__ = ["wargame","components","Rendering"];
+wargame.components.Rendering.__interfaces__ = [edge.IComponent];
+wargame.components.Rendering.prototype = {
+	toString: function() {
+		return "Rendering(sprite=$sprite,x=$x,y=$y)";
+	}
+	,__class__: wargame.components.Rendering
+};
+wargame.render = {};
+wargame.render.PixiRenderer = function(stage,renderer) {
+	this.componentRequirements = [wargame.components.Rendering];
+	this.stage = stage;
+	this.renderer = renderer;
+	this.__systemProcess = new wargame.render.PixiRenderer_SystemProcess(this);
+};
+wargame.render.PixiRenderer.__name__ = ["wargame","render","PixiRenderer"];
+wargame.render.PixiRenderer.__interfaces__ = [edge.ISystem];
+wargame.render.PixiRenderer.prototype = {
+	updateAdded: function(e,data) {
+		console.log("updating");
+		this.stage.addChild(data.r.sprite);
+	}
+	,update: function(r) {
+		r.sprite.x = r.x;
+		r.sprite.y = r.y;
+	}
+	,toString: function() {
+		return "wargame.render.PixiRenderer";
+	}
+	,__class__: wargame.render.PixiRenderer
+};
+wargame.render.PixiRenderer_SystemProcess = function(system) {
+	this.system = system;
+	this.updateItems = new edge.View();
+};
+wargame.render.PixiRenderer_SystemProcess.__name__ = ["wargame","render","PixiRenderer_SystemProcess"];
+wargame.render.PixiRenderer_SystemProcess.__interfaces__ = [edge.core.ISystemProcess];
+wargame.render.PixiRenderer_SystemProcess.prototype = {
+	removeEntity: function(entity) {
+		this.updateItems.remove(entity);
+	}
+	,addEntity: function(entity) {
+		this.updateMatchRequirements(entity);
+	}
+	,update: function(engine,delta) {
+		var data;
+		var $it0 = this.updateItems.iterator();
+		while( $it0.hasNext() ) {
+			var item = $it0.next();
+			data = item.data;
+			this.system.update(data.r);
+		}
+	}
+	,updateMatchRequirements: function(entity) {
+		this.updateItems.remove(entity);
+		var count = 1;
+		var o = { r : null};
+		var $it0 = entity.map.iterator();
+		while( $it0.hasNext() ) {
+			var component = $it0.next();
+			if(js.Boot.__instanceof(component,wargame.components.Rendering)) {
+				o.r = component;
+				if(--count == 0) break; else continue;
+			}
+		}
+		if(count == 0) this.updateItems.add(entity,o);
+	}
+	,__class__: wargame.render.PixiRenderer_SystemProcess
 };
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;
@@ -3607,8 +4212,10 @@ Math.isNaN = function(i1) {
 	return isNaN(i1);
 };
 String.prototype.__class__ = String;
-String.__name__ = true;
-Array.__name__ = true;
+String.__name__ = ["String"];
+Array.__name__ = ["Array"];
+Date.prototype.__class__ = Date;
+Date.__name__ = ["Date"];
 var Int = { __name__ : ["Int"]};
 var Dynamic = { __name__ : ["Dynamic"]};
 var Float = Number;
@@ -3671,12 +4278,50 @@ if(Array.prototype.filter == null) Array.prototype.filter = function(f1) {
         };
       }
     ;
+var scope = ("undefined" !== typeof window && window) || ("undefined" !== typeof global && global) || this;
+if(!scope.setImmediate) scope.setImmediate = function(callback) {
+	scope.setTimeout(callback,0);
+};
+var lastTime = 0;
+var vendors = ["webkit","moz"];
+var x = 0;
+while(x < vendors.length && !scope.requestAnimationFrame) {
+	scope.requestAnimationFrame = scope[vendors[x] + "RequestAnimationFrame"];
+	scope.cancelAnimationFrame = scope[vendors[x] + "CancelAnimationFrame"] || scope[vendors[x] + "CancelRequestAnimationFrame"];
+	x++;
+}
+if(!scope.requestAnimationFrame) scope.requestAnimationFrame = function(callback1) {
+	var currTime = new Date().getTime();
+	var timeToCall = Math.max(0,16 - (currTime - lastTime));
+	var id = scope.setTimeout(function() {
+		callback1(currTime + timeToCall);
+	},timeToCall);
+	lastTime = currTime + timeToCall;
+	return id;
+};
+if(!scope.cancelAnimationFrame) scope.cancelAnimationFrame = function(id1) {
+	scope.clearTimeout(id1);
+};
+if(typeof(scope.performance) == "undefined") scope.performance = { };
+if(typeof(scope.performance.now) == "undefined") {
+	var nowOffset = new Date().getTime();
+	if(scope.performance.timing && scope.performance.timing.navigationStart) nowOffset = scope.performance.timing.navigationStart;
+	var now = function() {
+		return new Date() - nowOffset;
+	};
+	scope.performance.now = now;
+}
 thx.core.Floats.TOLERANCE = 10e-5;
 thx.core.Floats.EPSILON = 10e-10;
 thx.core.Floats.pattern_parse = new EReg("^(\\+|-)?\\d+(\\.\\d+)?(e-?\\d+)?$","");
 Config.width = 800;
 Config.height = 600;
+Config.xTiles = 16;
+Config.yTiles = 16;
+Config.tileWidth = 64;
+Config.tileHeight = 64;
 Config.backgroundColor = thx.color._HSL.HSL_Impl_.create(0,0.0,0);
+haxe.ds.ObjectMap.count = 0;
 thx.color._Grey.Grey_Impl_.black = 0;
 thx.color._Grey.Grey_Impl_.white = 1;
 thx.color.parse.ColorParser.parser = new thx.color.parse.ColorParser();
@@ -3690,5 +4335,6 @@ thx.core.Strings.DIGITS = new EReg("^[0-9]+$","");
 thx.core.Strings.STRIPTAGS = new EReg("</?[a-z]+[^>]*?/?>","gi");
 thx.core.Strings.WSG = new EReg("\\s+","g");
 thx.core.Strings.SPLIT_LINES = new EReg("\r\n|\n\r|\n|\r","g");
+thx.core.Timer.FRAME_RATE = Math.round(16.6666666666666679);
 Main.main();
 })();
