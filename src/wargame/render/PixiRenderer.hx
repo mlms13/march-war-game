@@ -20,7 +20,7 @@ class PixiRenderer implements ISystem {
     stage.addChild(data.r.sprite);
   }
   public function update(r : Rendering) {
-    /*renderer.render(stage);*/
+    renderer.render(stage);
     r.sprite.x = r.x;
     r.sprite.y = r.y;
   }

@@ -4100,14 +4100,16 @@ wargame.Game = function(stage,renderer) {
 	this.renderer = renderer;
 	this.world = new edge.World();
 	var _g1 = 0;
-	var _g = Config.yTiles;
+	var _g = Config.xTiles;
 	while(_g1 < _g) {
 		var i = _g1++;
 		var _g3 = 0;
-		var _g2 = Config.xTiles;
+		var _g2 = Config.yTiles;
 		while(_g3 < _g2) {
 			var j = _g3++;
-			this.world.engine.create([new wargame.components.Rendering("assets/grass.png",i * Config.tileHeight,j * Config.tileWidth)]);
+			var rendering = new wargame.components.Rendering("assets/grass.png",i * Config.tileWidth,j * Config.tileHeight);
+			stage.addChild(rendering.sprite);
+			this.world.engine.create([rendering]);
 		}
 	}
 	this.world.render.add(new wargame.render.PixiRenderer(stage,renderer));
@@ -4150,6 +4152,7 @@ wargame.render.PixiRenderer.prototype = {
 		this.stage.addChild(data.r.sprite);
 	}
 	,update: function(r) {
+		this.renderer.render(this.stage);
 		r.sprite.x = r.x;
 		r.sprite.y = r.y;
 	}
@@ -4315,11 +4318,11 @@ thx.core.Floats.TOLERANCE = 10e-5;
 thx.core.Floats.EPSILON = 10e-10;
 thx.core.Floats.pattern_parse = new EReg("^(\\+|-)?\\d+(\\.\\d+)?(e-?\\d+)?$","");
 Config.width = 800;
-Config.height = 600;
+Config.height = 800;
 Config.xTiles = 16;
 Config.yTiles = 16;
-Config.tileWidth = 64;
-Config.tileHeight = 64;
+Config.tileWidth = 65;
+Config.tileHeight = 65;
 Config.backgroundColor = thx.color._HSL.HSL_Impl_.create(0,0.0,0);
 haxe.ds.ObjectMap.count = 0;
 thx.color._Grey.Grey_Impl_.black = 0;

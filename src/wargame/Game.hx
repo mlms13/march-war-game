@@ -17,10 +17,12 @@ class Game {
     this.renderer = renderer;
     world = new World();
 
-    for (i in 0...Config.yTiles) {
-      for (j in 0...Config.xTiles) {
+    for (i in 0...Config.xTiles) {
+      for (j in 0...Config.yTiles) {
+        var rendering = new Rendering("assets/grass.png", i * Config.tileWidth, j * Config.tileHeight);
+        stage.addChild(rendering.sprite);
         world.engine.create([
-          new Rendering("assets/grass.png", i * Config.tileHeight, j * Config.tileWidth)
+          rendering
         ]);
       }
     }
