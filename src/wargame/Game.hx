@@ -15,7 +15,7 @@ class Game {
   public function new(stage : Container, renderer : SystemRenderer) {
     this.stage = stage;
     this.renderer = renderer;
-    world = new World();
+    world = new World(40);
 
     for (i in 0...Config.xTiles) {
       for (j in 0...Config.yTiles) {
@@ -27,6 +27,7 @@ class Game {
       }
     }
 
+    world.render.add(new wargame.render.PixiStage(stage));
     world.render.add(new wargame.render.PixiRenderer(stage, renderer));
   }
   public function start() {

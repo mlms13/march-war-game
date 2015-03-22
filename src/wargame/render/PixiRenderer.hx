@@ -15,13 +15,7 @@ class PixiRenderer implements ISystem {
     this.renderer = renderer;
   }
 
-  public function updateAdded(e : Entity, data : { r : Rendering}) {
-    trace("updating");
-    stage.addChild(data.r.sprite);
-  }
-  public function update(r : Rendering) {
+  public function update() {
     renderer.render(stage);
-    r.sprite.x = r.x;
-    r.sprite.y = r.y;
   }
 }
