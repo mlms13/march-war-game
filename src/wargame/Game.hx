@@ -20,7 +20,6 @@ class Game {
     for (i in 0...Config.xTiles) {
       for (j in 0...Config.yTiles) {
         var rendering = new Rendering("assets/grass.png", i * Config.tileWidth, j * Config.tileHeight);
-        stage.addChild(rendering.sprite);
         world.engine.create([
           rendering
         ]);

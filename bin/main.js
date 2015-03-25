@@ -1,4 +1,5 @@
 (function (console) { "use strict";
+var $estr = function() { return js_Boot.__string_rec(this,''); };
 function $extend(from, fields) {
 	function Inherit() {} Inherit.prototype = from; var proto = new Inherit();
 	for (var name in fields) proto[name] = fields[name];
@@ -28,6 +29,8 @@ thx_color__$HSL_HSL_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -172,10 +175,10 @@ EReg.prototype = {
 		return this.r.m != null;
 	}
 	,matched: function(n) {
-		if(this.r.m != null && n >= 0 && n < this.r.m.length) return this.r.m[n]; else throw "EReg::matched";
+		if(this.r.m != null && n >= 0 && n < this.r.m.length) return this.r.m[n]; else throw new js__$Boot_HaxeError("EReg::matched");
 	}
 	,matchedPos: function() {
-		if(this.r.m == null) throw "No string matched";
+		if(this.r.m == null) throw new js__$Boot_HaxeError("No string matched");
 		return { pos : this.r.m.index, len : this.r.m[0].length};
 	}
 	,matchSub: function(s,pos,len) {
@@ -482,7 +485,7 @@ edge_Engine.prototype = {
 	}
 	,addSystem: function(phase,system) {
 		this.eachSystem(function(s) {
-			if(s == system) throw "System \"" + Std.string(system) + "\" already exists in Engine";
+			if(s == system) throw new js__$Boot_HaxeError("System \"" + Std.string(system) + "\" already exists in Engine");
 		});
 		var $it0 = this.mapEntities.keys();
 		while( $it0.hasNext() ) {
@@ -622,7 +625,7 @@ edge_Phase.prototype = {
 	}
 	,insertBefore: function(ref,system) {
 		var noderef = this.mapSystem.h[ref.__id__];
-		if(null == noderef) throw "Phase.insertBefore: unable to find " + Std.string(ref) + " system";
+		if(null == noderef) throw new js__$Boot_HaxeError("Phase.insertBefore: unable to find " + Std.string(ref) + " system");
 		var node = this.createNode(system);
 		if(noderef == this.first) {
 			node.next = noderef;
@@ -638,7 +641,7 @@ edge_Phase.prototype = {
 	}
 	,insertAfter: function(ref,system) {
 		var noderef = this.mapSystem.h[ref.__id__];
-		if(null == noderef) throw "Phase.insertAfter: unable to find " + Std.string(ref) + " system";
+		if(null == noderef) throw new js__$Boot_HaxeError("Phase.insertAfter: unable to find " + Std.string(ref) + " system");
 		var node = this.createNode(system);
 		if(noderef == this.last) {
 			node.prev = noderef;
@@ -674,7 +677,7 @@ edge_Phase.prototype = {
 		var system;
 		var key = Type.getClassName(cls);
 		system = this.mapType.get(key);
-		if(null == system) throw "type system " + Type.getClassName(cls) + " is not included in this Phase";
+		if(null == system) throw new js__$Boot_HaxeError("type system " + Type.getClassName(cls) + " is not included in this Phase");
 		this.remove(system);
 		return;
 	}
@@ -808,14 +811,16 @@ edge_core_NodeSystemIterator.prototype = {
 };
 var haxe_StackItem = { __ename__ : true, __constructs__ : ["CFunction","Module","FilePos","Method","LocalFunction"] };
 haxe_StackItem.CFunction = ["CFunction",0];
+haxe_StackItem.CFunction.toString = $estr;
 haxe_StackItem.CFunction.__enum__ = haxe_StackItem;
-haxe_StackItem.Module = function(m) { var $x = ["Module",1,m]; $x.__enum__ = haxe_StackItem; return $x; };
-haxe_StackItem.FilePos = function(s,file,line) { var $x = ["FilePos",2,s,file,line]; $x.__enum__ = haxe_StackItem; return $x; };
-haxe_StackItem.Method = function(classname,method) { var $x = ["Method",3,classname,method]; $x.__enum__ = haxe_StackItem; return $x; };
-haxe_StackItem.LocalFunction = function(v) { var $x = ["LocalFunction",4,v]; $x.__enum__ = haxe_StackItem; return $x; };
+haxe_StackItem.Module = function(m) { var $x = ["Module",1,m]; $x.__enum__ = haxe_StackItem; $x.toString = $estr; return $x; };
+haxe_StackItem.FilePos = function(s,file,line) { var $x = ["FilePos",2,s,file,line]; $x.__enum__ = haxe_StackItem; $x.toString = $estr; return $x; };
+haxe_StackItem.Method = function(classname,method) { var $x = ["Method",3,classname,method]; $x.__enum__ = haxe_StackItem; $x.toString = $estr; return $x; };
+haxe_StackItem.LocalFunction = function(v) { var $x = ["LocalFunction",4,v]; $x.__enum__ = haxe_StackItem; $x.toString = $estr; return $x; };
 var haxe_CallStack = function() { };
 haxe_CallStack.__name__ = ["haxe","CallStack"];
-haxe_CallStack.callStack = function() {
+haxe_CallStack.getStack = function(e) {
+	if(e == null) return [];
 	var oldValue = Error.prepareStackTrace;
 	Error.prepareStackTrace = function(error,callsites) {
 		var stack = [];
@@ -823,6 +828,7 @@ haxe_CallStack.callStack = function() {
 		while(_g < callsites.length) {
 			var site = callsites[_g];
 			++_g;
+			if(haxe_CallStack.wrapCallSite != null) site = haxe_CallStack.wrapCallSite(site);
 			var method = null;
 			var fullName = site.getFunctionName();
 			if(fullName != null) {
@@ -837,17 +843,23 @@ haxe_CallStack.callStack = function() {
 		}
 		return stack;
 	};
+	var a = haxe_CallStack.makeStack(e.stack);
+	Error.prepareStackTrace = oldValue;
+	return a;
+};
+haxe_CallStack.callStack = function() {
 	try {
 		throw new Error();
 	} catch( e ) {
-		var a = haxe_CallStack.makeStack(e.stack);
-		if(a != null) a.shift();
-		Error.prepareStackTrace = oldValue;
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
+		var a = haxe_CallStack.getStack(e);
+		a.shift();
 		return a;
 	}
 };
 haxe_CallStack.exceptionStack = function() {
-	return [];
+	return haxe_CallStack.getStack(haxe_CallStack.lastException);
 };
 haxe_CallStack.toString = function(stack) {
 	var b = new StringBuf();
@@ -898,7 +910,7 @@ haxe_CallStack.itemToString = function(b,s) {
 	}
 };
 haxe_CallStack.makeStack = function(s) {
-	if(typeof(s) == "string") {
+	if(s == null) return []; else if(typeof(s) == "string") {
 		var stack = s.split("\n");
 		if(stack[0] == "Error") stack.shift();
 		var m = [];
@@ -913,7 +925,7 @@ haxe_CallStack.makeStack = function(s) {
 				var file = rie10.matched(2);
 				var line1 = Std.parseInt(rie10.matched(3));
 				m.push(haxe_StackItem.FilePos(meth == "Anonymous function"?haxe_StackItem.LocalFunction():meth == "Global code"?null:haxe_StackItem.Method(path.join("."),meth),file,line1));
-			} else m.push(haxe_StackItem.Module(line));
+			} else m.push(haxe_StackItem.Module(StringTools.trim(line)));
 		}
 		return m;
 	} else return s;
@@ -1021,6 +1033,16 @@ haxe_ds_StringMap.prototype = {
 	}
 	,__class__: haxe_ds_StringMap
 };
+var js__$Boot_HaxeError = function(val) {
+	Error.call(this);
+	this.val = val;
+	if(Error.captureStackTrace) Error.captureStackTrace(this,js__$Boot_HaxeError);
+};
+js__$Boot_HaxeError.__name__ = ["js","_Boot","HaxeError"];
+js__$Boot_HaxeError.__super__ = Error;
+js__$Boot_HaxeError.prototype = $extend(Error.prototype,{
+	__class__: js__$Boot_HaxeError
+});
 var js_Boot = function() { };
 js_Boot.__name__ = ["js","Boot"];
 js_Boot.getClass = function(o) {
@@ -1068,6 +1090,8 @@ js_Boot.__string_rec = function(o,s) {
 		try {
 			tostr = o.toString;
 		} catch( e ) {
+			haxe_CallStack.lastException = e;
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
 			return "???";
 		}
 		if(tostr != null && tostr != Object.toString && typeof(tostr) == "function") {
@@ -1176,6 +1200,8 @@ thx_color__$CIELCh_CIELCh_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -1305,6 +1331,8 @@ thx_color__$CIELab_CIELab_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -1436,6 +1464,8 @@ thx_color__$CMY_CMY_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -1529,6 +1559,8 @@ thx_color__$CMYK_CMYK_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -1631,6 +1663,8 @@ thx_color__$Grey_Grey_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -1727,6 +1761,8 @@ thx_color__$HSLA_HSLA_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -1852,6 +1888,8 @@ thx_color__$HSV_HSV_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -2040,6 +2078,8 @@ thx_color__$HSVA_HSVA_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -2190,6 +2230,8 @@ thx_color__$RGB_RGB_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -2312,6 +2354,8 @@ thx_color__$RGBA_RGBA_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -2411,6 +2455,8 @@ thx_color__$RGBX_RGBX_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -2585,6 +2631,8 @@ thx_color__$RGBXA_RGBXA_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -2700,6 +2748,8 @@ thx_color__$XYZ_XYZ_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -2809,6 +2859,8 @@ thx_color__$Yxy_Yxy_$Impl_$.fromString = function(color) {
 			return null;
 		}
 	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
 		return null;
 	}
 };
@@ -2895,7 +2947,7 @@ thx_color_parse_ColorParser.parseChannel = function(s) {
 };
 thx_color_parse_ColorParser.getFloatChannels = function(channels,length,useInt8) {
 	if(useInt8 == null) useInt8 = true;
-	if(length != channels.length) throw "invalid number of channels, expected " + length + " but it is " + channels.length;
+	if(length != channels.length) throw new js__$Boot_HaxeError("invalid number of channels, expected " + length + " but it is " + channels.length);
 	return channels.map((function(f,a2) {
 		return function(a1) {
 			return f(a1,a2);
@@ -2903,7 +2955,7 @@ thx_color_parse_ColorParser.getFloatChannels = function(channels,length,useInt8)
 	})(thx_color_parse_ColorParser.getFloatChannel,useInt8));
 };
 thx_color_parse_ColorParser.getInt8Channels = function(channels,length) {
-	if(length != channels.length) throw "invalid number of channels, expected " + length + " but it is " + channels.length;
+	if(length != channels.length) throw new js__$Boot_HaxeError("invalid number of channels, expected " + length + " but it is " + channels.length);
 	return channels.map(thx_color_parse_ColorParser.getInt8Channel);
 };
 thx_color_parse_ColorParser.getFloatChannel = function(channel,useInt8) {
@@ -2947,7 +2999,7 @@ thx_color_parse_ColorParser.getInt8Channel = function(channel) {
 		var v2 = channel[2];
 		return Math.round(255 * v2 / 100);
 	default:
-		throw "unable to extract a valid int8 value";
+		throw new js__$Boot_HaxeError("unable to extract a valid int8 value");
 	}
 };
 thx_color_parse_ColorParser.prototype = {
@@ -3016,6 +3068,8 @@ thx_color_parse_ColorParser.prototype = {
 				return null;
 			}
 		} catch( e ) {
+			haxe_CallStack.lastException = e;
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
 			return null;
 		}
 	}
@@ -3033,12 +3087,12 @@ thx_color_parse_ColorInfo.prototype = {
 	,__class__: thx_color_parse_ColorInfo
 };
 var thx_color_parse_ChannelInfo = { __ename__ : true, __constructs__ : ["CIPercent","CIFloat","CIDegree","CIInt8","CIInt","CIBool"] };
-thx_color_parse_ChannelInfo.CIPercent = function(value) { var $x = ["CIPercent",0,value]; $x.__enum__ = thx_color_parse_ChannelInfo; return $x; };
-thx_color_parse_ChannelInfo.CIFloat = function(value) { var $x = ["CIFloat",1,value]; $x.__enum__ = thx_color_parse_ChannelInfo; return $x; };
-thx_color_parse_ChannelInfo.CIDegree = function(value) { var $x = ["CIDegree",2,value]; $x.__enum__ = thx_color_parse_ChannelInfo; return $x; };
-thx_color_parse_ChannelInfo.CIInt8 = function(value) { var $x = ["CIInt8",3,value]; $x.__enum__ = thx_color_parse_ChannelInfo; return $x; };
-thx_color_parse_ChannelInfo.CIInt = function(value) { var $x = ["CIInt",4,value]; $x.__enum__ = thx_color_parse_ChannelInfo; return $x; };
-thx_color_parse_ChannelInfo.CIBool = function(value) { var $x = ["CIBool",5,value]; $x.__enum__ = thx_color_parse_ChannelInfo; return $x; };
+thx_color_parse_ChannelInfo.CIPercent = function(value) { var $x = ["CIPercent",0,value]; $x.__enum__ = thx_color_parse_ChannelInfo; $x.toString = $estr; return $x; };
+thx_color_parse_ChannelInfo.CIFloat = function(value) { var $x = ["CIFloat",1,value]; $x.__enum__ = thx_color_parse_ChannelInfo; $x.toString = $estr; return $x; };
+thx_color_parse_ChannelInfo.CIDegree = function(value) { var $x = ["CIDegree",2,value]; $x.__enum__ = thx_color_parse_ChannelInfo; $x.toString = $estr; return $x; };
+thx_color_parse_ChannelInfo.CIInt8 = function(value) { var $x = ["CIInt8",3,value]; $x.__enum__ = thx_color_parse_ChannelInfo; $x.toString = $estr; return $x; };
+thx_color_parse_ChannelInfo.CIInt = function(value) { var $x = ["CIInt",4,value]; $x.__enum__ = thx_color_parse_ChannelInfo; $x.toString = $estr; return $x; };
+thx_color_parse_ChannelInfo.CIBool = function(value) { var $x = ["CIBool",5,value]; $x.__enum__ = thx_color_parse_ChannelInfo; $x.toString = $estr; return $x; };
 var thx_core_Arrays = function() { };
 thx_core_Arrays.__name__ = ["thx","core","Arrays"];
 thx_core_Arrays.after = function(array,element) {
@@ -3123,16 +3177,6 @@ thx_core_Arrays.crossMulti = function(array) {
 				result.push(t);
 			}
 		}
-	}
-	return result;
-};
-thx_core_Arrays.distinct = function(array) {
-	var result = [];
-	var _g = 0;
-	while(_g < array.length) {
-		var v = array[_g];
-		++_g;
-		if(!thx_core_Arrays.contains(result,v)) result.push(v);
 	}
 	return result;
 };
@@ -3490,11 +3534,15 @@ var thx_core_Error = function(message,stack,pos) {
 		try {
 			stack = haxe_CallStack.exceptionStack();
 		} catch( e ) {
+			haxe_CallStack.lastException = e;
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
 			stack = [];
 		}
 		if(stack.length == 0) try {
 			stack = haxe_CallStack.callStack();
 		} catch( e1 ) {
+			haxe_CallStack.lastException = e1;
+			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
 			stack = [];
 		}
 	}
@@ -3504,7 +3552,7 @@ var thx_core_Error = function(message,stack,pos) {
 thx_core_Error.__name__ = ["thx","core","Error"];
 thx_core_Error.fromDynamic = function(err,pos) {
 	if(js_Boot.__instanceof(err,thx_core_Error)) return err;
-	return new thx_core_error_ErrorWrapper("" + Std.string(err),err,null,pos);
+	return new thx_core_Error("" + Std.string(err),null,pos);
 };
 thx_core_Error.__super__ = Error;
 thx_core_Error.prototype = $extend(Error.prototype,{
@@ -3705,7 +3753,7 @@ thx_core_Ints.range = function(start,stop,step) {
 		stop = start;
 		start = 0;
 	}
-	if((stop - start) / step == Infinity) throw "infinite range";
+	if((stop - start) / step == Infinity) throw new js__$Boot_HaxeError("infinite range");
 	var range = [];
 	var i = -1;
 	var j;
@@ -3714,9 +3762,6 @@ thx_core_Ints.range = function(start,stop,step) {
 };
 thx_core_Ints.toString = function(value,base) {
 	return value.toString(base);
-};
-thx_core_Ints.toBool = function(v) {
-	return v != 0;
 };
 thx_core_Ints.sign = function(value) {
 	if(value < 0) return -1; else return 1;
@@ -3728,6 +3773,7 @@ thx_core_Ints.wrapCircular = function(v,max) {
 };
 var thx_core_Nil = { __ename__ : true, __constructs__ : ["nil"] };
 thx_core_Nil.nil = ["nil",0];
+thx_core_Nil.nil.toString = $estr;
 thx_core_Nil.nil.__enum__ = thx_core_Nil;
 var thx_core_Strings = function() { };
 thx_core_Strings.__name__ = ["thx","core","Strings"];
@@ -3791,11 +3837,6 @@ thx_core_Strings.isDigitsOnly = function(value) {
 };
 thx_core_Strings.isEmpty = function(value) {
 	return value == null || value == "";
-};
-thx_core_Strings.random = function(value,length) {
-	if(length == null) length = 1;
-	var pos = Math.floor((value.length - length + 1) * Math.random());
-	return HxOverrides.substr(value,pos,length);
 };
 thx_core_Strings.iterator = function(s) {
 	var _this = s.split("");
@@ -4043,9 +4084,6 @@ thx_core__$Tuple_Tuple1_$Impl_$["with"] = function(this1,v) {
 thx_core__$Tuple_Tuple1_$Impl_$.toString = function(this1) {
 	return "Tuple1(" + Std.string(this1) + ")";
 };
-thx_core__$Tuple_Tuple1_$Impl_$.arrayToTuple = function(v) {
-	return v[0];
-};
 var thx_core__$Tuple_Tuple2_$Impl_$ = {};
 thx_core__$Tuple_Tuple2_$Impl_$.__name__ = ["thx","core","_Tuple","Tuple2_Impl_"];
 thx_core__$Tuple_Tuple2_$Impl_$._new = function(_0,_1) {
@@ -4072,9 +4110,6 @@ thx_core__$Tuple_Tuple2_$Impl_$["with"] = function(this1,v) {
 thx_core__$Tuple_Tuple2_$Impl_$.toString = function(this1) {
 	return "Tuple2(" + Std.string(this1._0) + "," + Std.string(this1._1) + ")";
 };
-thx_core__$Tuple_Tuple2_$Impl_$.arrayToTuple2 = function(v) {
-	return { _0 : v[0], _1 : v[1]};
-};
 var thx_core__$Tuple_Tuple3_$Impl_$ = {};
 thx_core__$Tuple_Tuple3_$Impl_$.__name__ = ["thx","core","_Tuple","Tuple3_Impl_"];
 thx_core__$Tuple_Tuple3_$Impl_$._new = function(_0,_1,_2) {
@@ -4094,9 +4129,6 @@ thx_core__$Tuple_Tuple3_$Impl_$["with"] = function(this1,v) {
 };
 thx_core__$Tuple_Tuple3_$Impl_$.toString = function(this1) {
 	return "Tuple3(" + Std.string(this1._0) + "," + Std.string(this1._1) + "," + Std.string(this1._2) + ")";
-};
-thx_core__$Tuple_Tuple3_$Impl_$.arrayToTuple3 = function(v) {
-	return { _0 : v[0], _1 : v[1], _2 : v[2]};
 };
 var thx_core__$Tuple_Tuple4_$Impl_$ = {};
 thx_core__$Tuple_Tuple4_$Impl_$.__name__ = ["thx","core","_Tuple","Tuple4_Impl_"];
@@ -4118,9 +4150,6 @@ thx_core__$Tuple_Tuple4_$Impl_$["with"] = function(this1,v) {
 thx_core__$Tuple_Tuple4_$Impl_$.toString = function(this1) {
 	return "Tuple4(" + Std.string(this1._0) + "," + Std.string(this1._1) + "," + Std.string(this1._2) + "," + Std.string(this1._3) + ")";
 };
-thx_core__$Tuple_Tuple4_$Impl_$.arrayToTuple4 = function(v) {
-	return { _0 : v[0], _1 : v[1], _2 : v[2], _3 : v[3]};
-};
 var thx_core__$Tuple_Tuple5_$Impl_$ = {};
 thx_core__$Tuple_Tuple5_$Impl_$.__name__ = ["thx","core","_Tuple","Tuple5_Impl_"];
 thx_core__$Tuple_Tuple5_$Impl_$._new = function(_0,_1,_2,_3,_4) {
@@ -4141,9 +4170,6 @@ thx_core__$Tuple_Tuple5_$Impl_$["with"] = function(this1,v) {
 thx_core__$Tuple_Tuple5_$Impl_$.toString = function(this1) {
 	return "Tuple5(" + Std.string(this1._0) + "," + Std.string(this1._1) + "," + Std.string(this1._2) + "," + Std.string(this1._3) + "," + Std.string(this1._4) + ")";
 };
-thx_core__$Tuple_Tuple5_$Impl_$.arrayToTuple5 = function(v) {
-	return { _0 : v[0], _1 : v[1], _2 : v[2], _3 : v[3], _4 : v[4]};
-};
 var thx_core__$Tuple_Tuple6_$Impl_$ = {};
 thx_core__$Tuple_Tuple6_$Impl_$.__name__ = ["thx","core","_Tuple","Tuple6_Impl_"];
 thx_core__$Tuple_Tuple6_$Impl_$._new = function(_0,_1,_2,_3,_4,_5) {
@@ -4161,18 +4187,6 @@ thx_core__$Tuple_Tuple6_$Impl_$.dropRight = function(this1) {
 thx_core__$Tuple_Tuple6_$Impl_$.toString = function(this1) {
 	return "Tuple6(" + Std.string(this1._0) + "," + Std.string(this1._1) + "," + Std.string(this1._2) + "," + Std.string(this1._3) + "," + Std.string(this1._4) + "," + Std.string(this1._5) + ")";
 };
-thx_core__$Tuple_Tuple6_$Impl_$.arrayToTuple6 = function(v) {
-	return { _0 : v[0], _1 : v[1], _2 : v[2], _3 : v[3], _4 : v[4], _5 : v[5]};
-};
-var thx_core_error_ErrorWrapper = function(message,innerError,stack,pos) {
-	thx_core_Error.call(this,message,stack,pos);
-	this.innerError = innerError;
-};
-thx_core_error_ErrorWrapper.__name__ = ["thx","core","error","ErrorWrapper"];
-thx_core_error_ErrorWrapper.__super__ = thx_core_Error;
-thx_core_error_ErrorWrapper.prototype = $extend(thx_core_Error.prototype,{
-	__class__: thx_core_error_ErrorWrapper
-});
 var thx_core_error_NullArgument = function(message,posInfo) {
 	thx_core_Error.call(this,message,null,posInfo);
 };
@@ -4194,7 +4208,6 @@ var wargame_Game = function(stage,renderer) {
 		while(_g3 < _g2) {
 			var j = _g3++;
 			var rendering = new wargame_components_Rendering("assets/grass.png",i * Config.tileWidth,j * Config.tileHeight);
-			stage.addChild(rendering.sprite);
 			this.world.engine.create([rendering]);
 		}
 	}
@@ -4429,8 +4442,8 @@ thx_core_Floats.EPSILON = 10e-10;
 thx_core_Floats.pattern_parse = new EReg("^(\\+|-)?\\d+(\\.\\d+)?(e-?\\d+)?$","");
 Config.width = 800;
 Config.height = 800;
-Config.xTiles = 16;
-Config.yTiles = 16;
+Config.xTiles = 8;
+Config.yTiles = 8;
 Config.tileWidth = 65;
 Config.tileHeight = 65;
 Config.backgroundColor = thx_color__$HSL_HSL_$Impl_$.create(0,0.0,0);
