@@ -4207,7 +4207,7 @@ var wargame_Game = function(stage,renderer) {
 		var _g2 = Config.yTiles;
 		while(_g3 < _g2) {
 			var j = _g3++;
-			var rendering = new wargame_components_Rendering("assets/grass.png",i * Config.tileWidth,j * Config.tileHeight);
+			var rendering = new wargame_components_Rendering("assets/grass.png",i,j);
 			this.world.engine.create([rendering]);
 		}
 	}
@@ -4281,8 +4281,8 @@ wargame_render_PixiStage.prototype = {
 		this.stage.removeChild(data.r.sprite);
 	}
 	,update: function(r) {
-		r.sprite.x = r.x;
-		r.sprite.y = r.y;
+		r.sprite.x = r.x * Config.tileWidth;
+		r.sprite.y = r.y * Config.tileHeight;
 	}
 	,toString: function() {
 		return "wargame.render.PixiStage";

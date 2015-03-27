@@ -22,7 +22,7 @@ class PixiStage implements ISystem {
   }
 
   public function update(r : Rendering) {
-    r.sprite.x = r.x;
-    r.sprite.y = r.y;
+    r.sprite.x = r.x * Config.tileWidth;
+    r.sprite.y = r.y * Config.tileHeight;
   }
 }
