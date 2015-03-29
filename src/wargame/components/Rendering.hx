@@ -11,6 +11,10 @@ class Rendering implements IComponent {
 
   public function new(image : String, x : Float = 0, y : Float = 0) {
     this.sprite = new Sprite(Texture.fromImage(image));
+    this.sprite.interactive = true;
+    this.sprite.on("mousedown", function (_) {
+      trace('clicked on sprite with coords $x, $y');
+    });
     this.x = x;
     this.y = y;
   }

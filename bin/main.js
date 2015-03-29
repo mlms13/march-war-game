@@ -4225,6 +4225,10 @@ var wargame_components_Rendering = function(image,x,y) {
 	if(y == null) y = 0;
 	if(x == null) x = 0;
 	this.sprite = new PIXI.Sprite(PIXI.Texture.fromImage(image));
+	this.sprite.interactive = true;
+	this.sprite.on("mousedown",function(_) {
+		console.log("clicked on sprite with coords " + x + ", " + y);
+	});
 	this.x = x;
 	this.y = y;
 };
