@@ -4207,12 +4207,11 @@ var wargame_Game = function(stage,renderer) {
 		var _g2 = Config.yTiles;
 		while(_g3 < _g2) {
 			var j = _g3++;
-			var rendering = new wargame_components_Rendering("assets/grass.png",i,j);
-			this.world.engine.create([rendering]);
+			this.world.engine.create([new wargame_components_Display("assets/grass.png",i,j)]);
 		}
 	}
-	this.world.render.add(new wargame_render_PixiStage(stage));
-	this.world.render.add(new wargame_render_PixiRenderer(stage,renderer));
+	this.world.render.add(new wargame_systems_PixiStage(stage));
+	this.world.render.add(new wargame_systems_PixiRenderer(stage,renderer));
 };
 wargame_Game.__name__ = ["wargame","Game"];
 wargame_Game.prototype = {
@@ -4221,7 +4220,7 @@ wargame_Game.prototype = {
 	}
 	,__class__: wargame_Game
 };
-var wargame_components_Rendering = function(image,x,y) {
+var wargame_components_Display = function(image,x,y) {
 	if(y == null) y = 0;
 	if(x == null) x = 0;
 	this.sprite = new PIXI.Sprite(PIXI.Texture.fromImage(image));
@@ -4232,36 +4231,36 @@ var wargame_components_Rendering = function(image,x,y) {
 	this.x = x;
 	this.y = y;
 };
-wargame_components_Rendering.__name__ = ["wargame","components","Rendering"];
-wargame_components_Rendering.__interfaces__ = [edge_IComponent];
-wargame_components_Rendering.prototype = {
+wargame_components_Display.__name__ = ["wargame","components","Display"];
+wargame_components_Display.__interfaces__ = [edge_IComponent];
+wargame_components_Display.prototype = {
 	toString: function(sprite,x,y) {
-		return "Rendering(sprite=$sprite,x=$x,y=$y)";
+		return "Display(sprite=$sprite,x=$x,y=$y)";
 	}
-	,__class__: wargame_components_Rendering
+	,__class__: wargame_components_Display
 };
-var wargame_render_PixiRenderer = function(stage,renderer) {
+var wargame_systems_PixiRenderer = function(stage,renderer) {
 	this.stage = stage;
 	this.renderer = renderer;
-	this.__process__ = new wargame_render_PixiRenderer_$SystemProcess(this);
+	this.__process__ = new wargame_systems_PixiRenderer_$SystemProcess(this);
 };
-wargame_render_PixiRenderer.__name__ = ["wargame","render","PixiRenderer"];
-wargame_render_PixiRenderer.__interfaces__ = [edge_ISystem];
-wargame_render_PixiRenderer.prototype = {
+wargame_systems_PixiRenderer.__name__ = ["wargame","systems","PixiRenderer"];
+wargame_systems_PixiRenderer.__interfaces__ = [edge_ISystem];
+wargame_systems_PixiRenderer.prototype = {
 	update: function() {
 		this.renderer.render(this.stage);
 	}
 	,toString: function() {
-		return "wargame.render.PixiRenderer";
+		return "wargame.systems.PixiRenderer";
 	}
-	,__class__: wargame_render_PixiRenderer
+	,__class__: wargame_systems_PixiRenderer
 };
-var wargame_render_PixiRenderer_$SystemProcess = function(system) {
+var wargame_systems_PixiRenderer_$SystemProcess = function(system) {
 	this.system = system;
 };
-wargame_render_PixiRenderer_$SystemProcess.__name__ = ["wargame","render","PixiRenderer_SystemProcess"];
-wargame_render_PixiRenderer_$SystemProcess.__interfaces__ = [edge_core_ISystemProcess];
-wargame_render_PixiRenderer_$SystemProcess.prototype = {
+wargame_systems_PixiRenderer_$SystemProcess.__name__ = ["wargame","systems","PixiRenderer_SystemProcess"];
+wargame_systems_PixiRenderer_$SystemProcess.__interfaces__ = [edge_core_ISystemProcess];
+wargame_systems_PixiRenderer_$SystemProcess.prototype = {
 	removeEntity: function(entity) {
 	}
 	,addEntity: function(entity) {
@@ -4269,37 +4268,37 @@ wargame_render_PixiRenderer_$SystemProcess.prototype = {
 	,update: function(engine,delta) {
 		this.system.update();
 	}
-	,__class__: wargame_render_PixiRenderer_$SystemProcess
+	,__class__: wargame_systems_PixiRenderer_$SystemProcess
 };
-var wargame_render_PixiStage = function(stage) {
+var wargame_systems_PixiStage = function(stage) {
 	this.stage = stage;
-	this.__process__ = new wargame_render_PixiStage_$SystemProcess(this);
+	this.__process__ = new wargame_systems_PixiStage_$SystemProcess(this);
 };
-wargame_render_PixiStage.__name__ = ["wargame","render","PixiStage"];
-wargame_render_PixiStage.__interfaces__ = [edge_ISystem];
-wargame_render_PixiStage.prototype = {
+wargame_systems_PixiStage.__name__ = ["wargame","systems","PixiStage"];
+wargame_systems_PixiStage.__interfaces__ = [edge_ISystem];
+wargame_systems_PixiStage.prototype = {
 	updateAdded: function(e,data) {
-		this.stage.addChild(data.r.sprite);
+		this.stage.addChild(data.d.sprite);
 	}
 	,updateRemoved: function(e,data) {
-		this.stage.removeChild(data.r.sprite);
+		this.stage.removeChild(data.d.sprite);
 	}
-	,update: function(r) {
-		r.sprite.x = r.x * Config.tileWidth;
-		r.sprite.y = r.y * Config.tileHeight;
+	,update: function(d) {
+		d.sprite.x = d.x * Config.tileWidth;
+		d.sprite.y = d.y * Config.tileHeight;
 	}
 	,toString: function() {
-		return "wargame.render.PixiStage";
+		return "wargame.systems.PixiStage";
 	}
-	,__class__: wargame_render_PixiStage
+	,__class__: wargame_systems_PixiStage
 };
-var wargame_render_PixiStage_$SystemProcess = function(system) {
+var wargame_systems_PixiStage_$SystemProcess = function(system) {
 	this.system = system;
 	this.updateItems = new edge_View();
 };
-wargame_render_PixiStage_$SystemProcess.__name__ = ["wargame","render","PixiStage_SystemProcess"];
-wargame_render_PixiStage_$SystemProcess.__interfaces__ = [edge_core_ISystemProcess];
-wargame_render_PixiStage_$SystemProcess.prototype = {
+wargame_systems_PixiStage_$SystemProcess.__name__ = ["wargame","systems","PixiStage_SystemProcess"];
+wargame_systems_PixiStage_$SystemProcess.__interfaces__ = [edge_core_ISystemProcess];
+wargame_systems_PixiStage_$SystemProcess.prototype = {
 	removeEntity: function(entity) {
 		var removed = this.updateItems.tryRemove(entity);
 		if(removed != null) this.system.updateRemoved(entity,removed);
@@ -4313,18 +4312,18 @@ wargame_render_PixiStage_$SystemProcess.prototype = {
 		while( $it0.hasNext() ) {
 			var item = $it0.next();
 			data = item.data;
-			this.system.update(data.r);
+			this.system.update(data.d);
 		}
 	}
 	,updateMatchRequirements: function(entity) {
 		var removed = this.updateItems.tryRemove(entity);
 		var count = 1;
-		var o = { r : null};
+		var o = { d : null};
 		var $it0 = entity.map.iterator();
 		while( $it0.hasNext() ) {
 			var component = $it0.next();
-			if(js_Boot.__instanceof(component,wargame_components_Rendering)) {
-				o.r = component;
+			if(js_Boot.__instanceof(component,wargame_components_Display)) {
+				o.d = component;
 				if(--count == 0) break; else continue;
 			}
 		}
@@ -4332,7 +4331,7 @@ wargame_render_PixiStage_$SystemProcess.prototype = {
 		if(null != removed && !added) this.system.updateRemoved(entity,removed);
 		if(added && null == removed) this.system.updateAdded(entity,o);
 	}
-	,__class__: wargame_render_PixiStage_$SystemProcess
+	,__class__: wargame_systems_PixiStage_$SystemProcess
 };
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;

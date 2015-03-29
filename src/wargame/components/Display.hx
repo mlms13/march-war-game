@@ -4,7 +4,7 @@ import edge.IComponent;
 import pixi.core.sprites.Sprite;
 import pixi.core.textures.Texture;
 
-class Rendering implements IComponent {
+class Display implements IComponent {
   var sprite : Sprite;
   var x : Float;
   var y : Float;

@@ -1,10 +1,9 @@
-package wargame.render;
+package wargame.systems;
 
 import edge.Entity;
 import edge.ISystem;
 import pixi.core.renderers.SystemRenderer;
 import pixi.core.display.Container;
-import wargame.components.Rendering;
 
 class PixiRenderer implements ISystem {
   var stage : Container;

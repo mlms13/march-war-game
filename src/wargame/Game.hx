@@ -19,15 +19,14 @@ class Game {
 
     for (i in 0...Config.xTiles) {
       for (j in 0...Config.yTiles) {
-        var rendering = new Rendering("assets/grass.png", i, j);
         world.engine.create([
-          rendering
+          new Display("assets/grass.png", i, j)
         ]);
       }
     }
 
-    world.render.add(new wargame.render.PixiStage(stage));
-    world.render.add(new wargame.render.PixiRenderer(stage, renderer));
+    world.render.add(new wargame.systems.PixiStage(stage));
+    world.render.add(new wargame.systems.PixiRenderer(stage, renderer));
   }
   public function start() {
     world.start();
