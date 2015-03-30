@@ -6,6 +6,7 @@ import pixi.core.display.Container;
 import pixi.core.renderers.SystemRenderer;
 
 import wargame.components.*;
+import wargame.systems.*;
 
 class Game {
   var stage : Container;
@@ -25,8 +26,9 @@ class Game {
       }
     }
 
-    world.render.add(new wargame.systems.PixiStage(stage));
-    world.render.add(new wargame.systems.PixiRenderer(stage, renderer));
+    world.physics.add(new MouseInteraction(stage));
+    world.render.add(new PixiStage(stage));
+    world.render.add(new PixiRenderer(stage, renderer));
   }
   public function start() {
     world.start();

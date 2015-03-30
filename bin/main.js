@@ -4210,6 +4210,7 @@ var wargame_Game = function(stage,renderer) {
 			this.world.engine.create([new wargame_components_Display("assets/grass.png",i,j)]);
 		}
 	}
+	this.world.physics.add(new wargame_systems_MouseInteraction(stage));
 	this.world.render.add(new wargame_systems_PixiStage(stage));
 	this.world.render.add(new wargame_systems_PixiRenderer(stage,renderer));
 };
@@ -4238,6 +4239,53 @@ wargame_components_Display.prototype = {
 		return "Display(sprite=$sprite,x=$x,y=$y)";
 	}
 	,__class__: wargame_components_Display
+};
+var wargame_systems_MouseInteraction = function(stage) {
+	this.stage = stage;
+	this.stage.interactive = true;
+	this.mouseCoords = { x : 0.0, y : 0.0};
+	this.mouseIsDown = false;
+	this.stage.on("mousemove",$bind(this,this.mouseMove));
+	this.stage.on("mousedown",$bind(this,this.mouseDown));
+	this.stage.on("mouseup",$bind(this,this.mouseUp));
+	this.__process__ = new wargame_systems_MouseInteraction_$SystemProcess(this);
+};
+wargame_systems_MouseInteraction.__name__ = ["wargame","systems","MouseInteraction"];
+wargame_systems_MouseInteraction.__interfaces__ = [edge_ISystem];
+wargame_systems_MouseInteraction.prototype = {
+	mouseMove: function(e) {
+		var pt = e.data.global;
+		this.mouseCoords.x = pt.x;
+		this.mouseCoords.y = pt.y;
+	}
+	,mouseDown: function(_) {
+		this.mouseIsDown = true;
+	}
+	,mouseUp: function(_) {
+		this.mouseIsDown = false;
+	}
+	,update: function() {
+		if(this.mouseIsDown) console.log("Mouse Down at " + this.mouseCoords.x + ", " + this.mouseCoords.y); else console.log("Mouse not down at " + this.mouseCoords.x + ", " + this.mouseCoords.y);
+	}
+	,toString: function() {
+		return "wargame.systems.MouseInteraction";
+	}
+	,__class__: wargame_systems_MouseInteraction
+};
+var wargame_systems_MouseInteraction_$SystemProcess = function(system) {
+	this.system = system;
+};
+wargame_systems_MouseInteraction_$SystemProcess.__name__ = ["wargame","systems","MouseInteraction_SystemProcess"];
+wargame_systems_MouseInteraction_$SystemProcess.__interfaces__ = [edge_core_ISystemProcess];
+wargame_systems_MouseInteraction_$SystemProcess.prototype = {
+	removeEntity: function(entity) {
+	}
+	,addEntity: function(entity) {
+	}
+	,update: function(engine,delta) {
+		this.system.update();
+	}
+	,__class__: wargame_systems_MouseInteraction_$SystemProcess
 };
 var wargame_systems_PixiRenderer = function(stage,renderer) {
 	this.stage = stage;
