@@ -5,6 +5,7 @@ import edge.ISystem;
 import pixi.core.renderers.SystemRenderer;
 import pixi.core.display.Container;
 import wargame.components.Display;
+import wargame.components.Position;
 
 class PixiStage implements ISystem {
   var stage : Container;
@@ -21,8 +22,8 @@ class PixiStage implements ISystem {
     stage.removeChild(data.d.sprite);
   }
 
-  public function update(d : Display) {
-    d.sprite.x = d.x * Config.tileWidth;
-    d.sprite.y = d.y * Config.tileHeight;
+  public function update(d : Display, p : Position) {
+    d.sprite.x = p.x * Config.tileWidth;
+    d.sprite.y = p.y * Config.tileHeight;
   }
 }

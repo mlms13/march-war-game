@@ -4207,7 +4207,7 @@ var wargame_Game = function(stage,renderer) {
 		var _g2 = Config.yTiles;
 		while(_g3 < _g2) {
 			var j = _g3++;
-			this.world.engine.create([new wargame_components_Display("assets/grass.png",i,j)]);
+			this.world.engine.create([new wargame_components_Display("assets/grass.png"),new wargame_components_Position(i,j)]);
 		}
 	}
 	this.world.physics.add(new wargame_systems_MouseInteraction(stage));
@@ -4221,24 +4221,30 @@ wargame_Game.prototype = {
 	}
 	,__class__: wargame_Game
 };
-var wargame_components_Display = function(image,x,y) {
-	if(y == null) y = 0;
-	if(x == null) x = 0;
+var wargame_components_Display = function(image) {
 	this.sprite = new PIXI.Sprite(PIXI.Texture.fromImage(image));
-	this.sprite.interactive = true;
-	this.sprite.on("mousedown",function(_) {
-		console.log("clicked on sprite with coords " + x + ", " + y);
-	});
-	this.x = x;
-	this.y = y;
 };
 wargame_components_Display.__name__ = ["wargame","components","Display"];
 wargame_components_Display.__interfaces__ = [edge_IComponent];
 wargame_components_Display.prototype = {
-	toString: function(sprite,x,y) {
-		return "Display(sprite=$sprite,x=$x,y=$y)";
+	toString: function(sprite) {
+		return "Display(sprite=$sprite)";
 	}
 	,__class__: wargame_components_Display
+};
+var wargame_components_Position = function(x,y) {
+	if(y == null) y = 0;
+	if(x == null) x = 0;
+	this.x = x;
+	this.y = y;
+};
+wargame_components_Position.__name__ = ["wargame","components","Position"];
+wargame_components_Position.__interfaces__ = [edge_IComponent];
+wargame_components_Position.prototype = {
+	toString: function(x,y) {
+		return "Position(x=$x,y=$y)";
+	}
+	,__class__: wargame_components_Position
 };
 var wargame_systems_MouseInteraction = function(stage) {
 	this.stage = stage;
@@ -4331,9 +4337,9 @@ wargame_systems_PixiStage.prototype = {
 	,updateRemoved: function(e,data) {
 		this.stage.removeChild(data.d.sprite);
 	}
-	,update: function(d) {
-		d.sprite.x = d.x * Config.tileWidth;
-		d.sprite.y = d.y * Config.tileHeight;
+	,update: function(d,p) {
+		d.sprite.x = p.x * Config.tileWidth;
+		d.sprite.y = p.y * Config.tileHeight;
 	}
 	,toString: function() {
 		return "wargame.systems.PixiStage";
@@ -4360,18 +4366,22 @@ wargame_systems_PixiStage_$SystemProcess.prototype = {
 		while( $it0.hasNext() ) {
 			var item = $it0.next();
 			data = item.data;
-			this.system.update(data.d);
+			this.system.update(data.d,data.p);
 		}
 	}
 	,updateMatchRequirements: function(entity) {
 		var removed = this.updateItems.tryRemove(entity);
-		var count = 1;
-		var o = { d : null};
+		var count = 2;
+		var o = { d : null, p : null};
 		var $it0 = entity.map.iterator();
 		while( $it0.hasNext() ) {
 			var component = $it0.next();
 			if(js_Boot.__instanceof(component,wargame_components_Display)) {
 				o.d = component;
+				if(--count == 0) break; else continue;
+			}
+			if(js_Boot.__instanceof(component,wargame_components_Position)) {
+				o.p = component;
 				if(--count == 0) break; else continue;
 			}
 		}

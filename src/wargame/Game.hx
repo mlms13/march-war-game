@@ -21,7 +21,8 @@ class Game {
     for (i in 0...Config.xTiles) {
       for (j in 0...Config.yTiles) {
         world.engine.create([
-          new Display("assets/grass.png", i, j)
+          new Display("assets/grass.png"),
+          new Position(i, j)
         ]);
       }
     }
