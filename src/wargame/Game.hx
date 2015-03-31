@@ -7,6 +7,7 @@ import pixi.core.renderers.SystemRenderer;
 
 import wargame.components.*;
 import wargame.systems.*;
+import wargame.entities.*;
 
 class Game {
   var stage : Container;
@@ -25,6 +26,14 @@ class Game {
           new Position(i, j)
         ]);
       }
+    }
+
+    for (i in 0...Config.yTiles) {
+      Cemetery.createSkeleton(world.engine, 0, i);
+    }
+
+    for (i in 0...Config.yTiles) {
+      Cemetery.createZombie(world.engine, Config.yTiles - 1, i);
     }
 
     world.physics.add(new MouseInteraction(stage));

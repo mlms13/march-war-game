@@ -4210,6 +4210,18 @@ var wargame_Game = function(stage,renderer) {
 			this.world.engine.create([new wargame_components_Display("assets/grass.png"),new wargame_components_Position(i,j)]);
 		}
 	}
+	var _g11 = 0;
+	var _g4 = Config.yTiles;
+	while(_g11 < _g4) {
+		var i1 = _g11++;
+		wargame_entities_Cemetery.createSkeleton(this.world.engine,0,i1);
+	}
+	var _g12 = 0;
+	var _g5 = Config.yTiles;
+	while(_g12 < _g5) {
+		var i2 = _g12++;
+		wargame_entities_Cemetery.createZombie(this.world.engine,Config.yTiles - 1,i2);
+	}
 	this.world.physics.add(new wargame_systems_MouseInteraction(stage));
 	this.world.render.add(new wargame_systems_PixiStage(stage));
 	this.world.render.add(new wargame_systems_PixiRenderer(stage,renderer));
@@ -4245,6 +4257,14 @@ wargame_components_Position.prototype = {
 		return "Position(x=$x,y=$y)";
 	}
 	,__class__: wargame_components_Position
+};
+var wargame_entities_Cemetery = function() { };
+wargame_entities_Cemetery.__name__ = ["wargame","entities","Cemetery"];
+wargame_entities_Cemetery.createSkeleton = function(engine,posX,posY) {
+	engine.create([new wargame_components_Display("assets/skeleton.png"),new wargame_components_Position(posX,posY)]);
+};
+wargame_entities_Cemetery.createZombie = function(engine,posX,posY) {
+	engine.create([new wargame_components_Display("assets/zombie.png"),new wargame_components_Position(posX,posY)]);
 };
 var wargame_systems_MouseInteraction = function(stage) {
 	this.stage = stage;
