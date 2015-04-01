@@ -33,7 +33,7 @@ class Game {
     }
 
     for (i in 0...Config.yTiles) {
-      Cemetery.createZombie(world.engine, Config.yTiles - 1, i);
+      Cemetery.createZombie(world.engine, Config.yTiles, i);
     }
 
     world.physics.add(new MouseInteraction(stage));

@@ -4220,7 +4220,7 @@ var wargame_Game = function(stage,renderer) {
 	var _g5 = Config.yTiles;
 	while(_g12 < _g5) {
 		var i2 = _g12++;
-		wargame_entities_Cemetery.createZombie(this.world.engine,Config.yTiles - 1,i2);
+		wargame_entities_Cemetery.createZombie(this.world.engine,Config.yTiles,i2);
 	}
 	this.world.physics.add(new wargame_systems_MouseInteraction(stage));
 	this.world.render.add(new wargame_systems_PixiStage(stage));
@@ -4233,14 +4233,18 @@ wargame_Game.prototype = {
 	}
 	,__class__: wargame_Game
 };
-var wargame_components_Display = function(image) {
+var wargame_components_Display = function(image,flipX,flipY) {
+	if(flipY == null) flipY = false;
+	if(flipX == null) flipX = false;
 	this.sprite = new PIXI.Sprite(PIXI.Texture.fromImage(image));
+	this.flipX = flipX;
+	this.flipY = flipY;
 };
 wargame_components_Display.__name__ = ["wargame","components","Display"];
 wargame_components_Display.__interfaces__ = [edge_IComponent];
 wargame_components_Display.prototype = {
-	toString: function(sprite) {
-		return "Display(sprite=$sprite)";
+	toString: function(sprite,flipX,flipY) {
+		return "Display(sprite=$sprite,flipX=$flipX,flipY=$flipY)";
 	}
 	,__class__: wargame_components_Display
 };
@@ -4264,7 +4268,7 @@ wargame_entities_Cemetery.createSkeleton = function(engine,posX,posY) {
 	engine.create([new wargame_components_Display("assets/skeleton.png"),new wargame_components_Position(posX,posY)]);
 };
 wargame_entities_Cemetery.createZombie = function(engine,posX,posY) {
-	engine.create([new wargame_components_Display("assets/zombie.png"),new wargame_components_Position(posX,posY)]);
+	engine.create([new wargame_components_Display("assets/zombie.png",true),new wargame_components_Position(posX,posY)]);
 };
 var wargame_systems_MouseInteraction = function(stage) {
 	this.stage = stage;
@@ -4360,6 +4364,8 @@ wargame_systems_PixiStage.prototype = {
 	,update: function(d,p) {
 		d.sprite.x = p.x * Config.tileWidth;
 		d.sprite.y = p.y * Config.tileHeight;
+		if(d.flipX) d.sprite.scale.x = -1; else d.sprite.scale.x = 1;
+		if(d.flipY) d.sprite.scale.y = -1; else d.sprite.scale.y = 1;
 	}
 	,toString: function() {
 		return "wargame.systems.PixiStage";

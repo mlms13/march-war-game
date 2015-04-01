@@ -25,5 +25,8 @@ class PixiStage implements ISystem {
   public function update(d : Display, p : Position) {
     d.sprite.x = p.x * Config.tileWidth;
     d.sprite.y = p.y * Config.tileHeight;
+
+    d.sprite.scale.x = d.flipX ? -1 : 1;
+    d.sprite.scale.y = d.flipY ? -1 : 1;
   }
 }

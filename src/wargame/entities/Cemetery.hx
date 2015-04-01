@@ -18,7 +18,7 @@ class Cemetery {
 
   public static function createZombie(engine : Engine, posX : Float, posY : Float) {
     engine.create([
-      new Display("assets/zombie.png"),
+      new Display("assets/zombie.png", true),
       new Position(posX, posY)
       // TODO: health
       // TODO: attack
